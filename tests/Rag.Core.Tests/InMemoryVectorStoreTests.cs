@@ -107,8 +107,8 @@ public class InMemoryVectorStoreTests
     [Fact]
     public async Task Using_a_missing_collection_throws()
     {
-        await Assert.ThrowsAsync<InvalidOperationException>(() => _store.SearchAsync("missing", new float[] { 1f, 0f }, 5));
-        await Assert.ThrowsAsync<InvalidOperationException>(() => _store.UpsertAsync("missing", []));
+        await Assert.ThrowsAsync<CollectionNotFoundException>(() => _store.SearchAsync("missing", new float[] { 1f, 0f }, 5));
+        await Assert.ThrowsAsync<CollectionNotFoundException>(() => _store.UpsertAsync("missing", []));
     }
 
     [Fact]

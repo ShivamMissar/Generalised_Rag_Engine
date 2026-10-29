@@ -71,9 +71,8 @@ try
             break;
     }
 }
-catch (InvalidOperationException ex) when (ex.Message.Contains("doesn't exist"))
+catch (CollectionNotFoundException ex)
 {
-    // The collection hasn't been created yet.
     Console.WriteLine($"{ex.Message}\nRun the 'index' command first.");
 }
 catch (HttpRequestException ex)

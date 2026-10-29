@@ -1,0 +1,24 @@
+# Try the API from VS Code (install the "REST Client" extension, then click "Send Request" above each request).
+# Start the API first: dotnet run --project src/Rag.Api
+
+@api = http://localhost:5209
+
+### Is the API running?
+GET {{api}}/health
+
+### 1. Build the index from samples/candidate (do this first)
+POST {{api}}/api/index
+
+### 2. Search
+GET {{api}}/api/search?q=experience with cloud deployment&topK=3
+
+### 3. Job match (can take up to a minute)
+POST {{api}}/api/match
+Content-Type: application/json
+
+{
+  "jobAd": "## What you'll need\n- 2+ years of C# and .NET\n- Building REST APIs with ASP.NET Core\n- SQL and relational database design\n- Experience with Kubernetes"
+}
+
+### Error example: missing question (400)
+GET {{api}}/api/search

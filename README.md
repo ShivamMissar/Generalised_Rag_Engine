@@ -52,10 +52,12 @@ src/
   Rag.Core/          The engine: interfaces, models, and every pipeline step above
   Rag.Sqlite/        SQLite vector store
   Rag.Playground/    Command-line tool that runs the engine (index, search, match, eval)
-  Rag.Api/           ASP.NET Core minimal API (health check for now)
+  Rag.Api/           ASP.NET Core minimal API: index, search and match endpoints
 tests/
   Rag.Core.Tests/    Unit tests for the engine (no Ollama needed)
   Rag.Sqlite.Tests/  Tests for the SQLite store
+  Rag.Api.Tests/     Tests that run the API in memory with fake AI models
+  Rag.Testing/       Shared fakes: a keyword "embedding model" and a canned chat model
 evals/               Retrieval test questions
 samples/             Made-up CV, project write-ups and job ad for testing
 ```
@@ -72,6 +74,21 @@ dotnet run --project Rag.Playground -- eval                     # score search q
 ```
 
 Run the tests from the repository root with `dotnet test`.
+
+### The API
+
+```bash
+dotnet run --project Rag.Api            # http://localhost:5209
+```
+
+| Endpoint | What it does |
+|---|---|
+| `GET /health` | Returns `Healthy` if the API is running. |
+| `POST /api/index` | Rebuilds the index from `Rag:DocumentsPath` (default `samples/candidate`). |
+| `GET /api/search?q=...&topK=5` | The best-matching chunks for a question (`topK` 1–20). |
+| `POST /api/match` with `{ "jobAd": "..." }` | Requirements, evidence and the AI's match report. |
+
+Errors come back as standard problem-details JSON: 400 for bad input, 409 if nothing is indexed yet, 503 if Ollama isn't running. Settings live in the `Rag` section of [`appsettings.json`](src/Rag.Api/appsettings.json). [`Rag.Api.http`](src/Rag.Api/Rag.Api.http) has ready-made requests for VS Code's REST Client extension, and in Development the OpenAPI description is at `/openapi/v1.json`.
 
 Real personal documents belong in `private/`, which is git-ignored.
 

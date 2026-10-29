@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Rag.Core\Rag.Core.csproj" />
+    <ProjectReference Include="..\Rag.Testing\Rag.Testing.csproj" />
   </ItemGroup>
 
 </Project>

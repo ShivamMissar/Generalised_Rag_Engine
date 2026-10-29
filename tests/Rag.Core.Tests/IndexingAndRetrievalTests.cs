@@ -3,7 +3,7 @@ using Rag.Core.Indexing;
 using Rag.Core.Models;
 using Rag.Core.Retrieval;
 using Rag.Core.Storage;
-using Rag.Core.Tests.Fakes;
+using Rag.Testing;
 
 namespace Rag.Core.Tests;
 

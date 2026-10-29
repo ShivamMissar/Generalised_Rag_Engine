@@ -1,13 +1,13 @@
 using Microsoft.Extensions.AI;
 
-namespace Rag.Core.Tests.Fakes;
+namespace Rag.Testing;
 
 /// <summary>
 /// A stand-in for a real embedding model, so tests run instantly without Ollama. Each dimension counts how often
 /// one keyword appears in the text, so texts sharing keywords get similar vectors. The last dimension is always 1,
 /// so no vector is ever all zeros.
 /// </summary>
-internal sealed class KeywordEmbeddingGenerator(params string[] keywords) : IEmbeddingGenerator<string, Embedding<float>>
+public sealed class KeywordEmbeddingGenerator(params string[] keywords) : IEmbeddingGenerator<string, Embedding<float>>
 {
     /// <summary>Every text this generator was asked to embed, in order.</summary>
     public List<string> Inputs { get; } = [];

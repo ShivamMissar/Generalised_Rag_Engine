@@ -1,9 +1,9 @@
 using Microsoft.Extensions.AI;
 
-namespace Rag.Core.Tests.Fakes;
+namespace Rag.Testing;
 
 /// <summary>A stand-in chat model that always gives the same reply, and records what it was sent.</summary>
-internal sealed class RecordingChatClient(string reply) : IChatClient
+public sealed class RecordingChatClient(string reply) : IChatClient
 {
     public IReadOnlyList<ChatMessage> LastMessages { get; private set; } = [];
     public ChatOptions? LastOptions { get; private set; }

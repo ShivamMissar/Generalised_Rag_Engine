@@ -2,7 +2,7 @@ using Microsoft.Extensions.AI;
 using Rag.Core.Abstractions;
 using Rag.Core.JobMatching;
 using Rag.Core.Models;
-using Rag.Core.Tests.Fakes;
+using Rag.Testing;
 
 namespace Rag.Core.Tests;
 

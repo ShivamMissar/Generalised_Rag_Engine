@@ -52,6 +52,5 @@ public static class VectorStoreChecks
     }
 
     /// <summary>The error for searching or writing to a collection that hasn't been created.</summary>
-    public static InvalidOperationException CollectionNotFound(string collectionName) =>
-        new($"Collection '{collectionName}' doesn't exist. Index some documents into it first.");
+    public static CollectionNotFoundException CollectionNotFound(string collectionName) => new(collectionName);
 }

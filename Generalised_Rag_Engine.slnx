@@ -6,7 +6,9 @@
     <Project Path="src/Rag.Sqlite/Rag.Sqlite.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Rag.Api.Tests/Rag.Api.Tests.csproj" />
     <Project Path="tests/Rag.Core.Tests/Rag.Core.Tests.csproj" />
     <Project Path="tests/Rag.Sqlite.Tests/Rag.Sqlite.Tests.csproj" />
+    <Project Path="tests/Rag.Testing/Rag.Testing.csproj" />
   </Folder>
 </Solution>
