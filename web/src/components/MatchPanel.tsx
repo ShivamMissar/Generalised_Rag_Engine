@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { ApiError, matchJobAd, type MatchResponse } from '../api'
 import sampleJobAd from '../../../samples/job-ads/backend-developer.md?raw'
+import { AnalysisProgress } from './AnalysisProgress'
 import { EvidenceCard } from './EvidenceCard'
+import { SparkleIcon } from './Icons'
 import { Report } from './Report'
 
 type Props = {
@@ -53,7 +55,7 @@ export function MatchPanel({ sessionId, onSessionExpired }: Props) {
   }
 
   return (
-    <section className="panel">
+    <section className="glass panel">
       <div className="field">
         <div className="field__label-row">
           <label htmlFor="job-ad">Job ad</label>
@@ -71,19 +73,20 @@ export function MatchPanel({ sessionId, onSessionExpired }: Props) {
       </div>
 
       <div className="actions">
-        <button type="button" className="button" onClick={onAnalyse} disabled={loading || !sessionId || jobAd.trim() === ''}>
+        <button type="button" className="button button--primary button--large" onClick={onAnalyse} disabled={loading || !sessionId || jobAd.trim() === ''}>
+          <SparkleIcon className="icon icon--small" />
           {loading ? 'Analysing…' : 'Analyse match'}
         </button>
         {!sessionId && <span className="muted">Add your CV in step 1 first.</span>}
-        {loading && <span className="muted">Searching your documents and asking the AI… {seconds}s (usually 15–30s)</span>}
       </div>
 
-      {error && <p className="error">{error}</p>}
+      {loading && <AnalysisProgress seconds={seconds} />}
+      {error && <p className="banner banner--error">{error}</p>}
 
       {result && (
         <div className="results">
           <div className="results__main">
-            <h2>Report</h2>
+            <h2 className="results__title">Your match report</h2>
             <p className="muted">
               Searched your documents for {result.requirements.length}{' '}
               {result.requirements.length === 1 ? 'requirement' : 'requirements'}. Click a number to see its evidence.
@@ -91,7 +94,7 @@ export function MatchPanel({ sessionId, onSessionExpired }: Props) {
             <Report report={result.report} evidenceCount={result.evidence.length} onCite={onCite} />
           </div>
           <aside className="results__side">
-            <h2>Evidence</h2>
+            <h2 className="results__title">Evidence</h2>
             <p className="muted">The parts of your documents the AI was given.</p>
             {result.evidence.map((hit, i) => (
               <EvidenceCard key={hit.chunkId} hit={hit} number={i + 1} highlighted={highlighted === i + 1} />

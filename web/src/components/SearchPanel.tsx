@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { ApiError, search, type SearchResponse } from '../api'
 import { EvidenceCard } from './EvidenceCard'
+import { SearchIcon } from './Icons'
 
 type Props = {
   /** The visitor's session, or null if they haven't added a CV yet. */
@@ -36,9 +37,10 @@ export function SearchPanel({ sessionId, onSessionExpired }: Props) {
   }
 
   return (
-    <section className="panel">
+    <section className="glass panel">
       <form className="search" onSubmit={onSubmit}>
         <label htmlFor="query" className="visually-hidden">Question</label>
+        <SearchIcon className="icon search__icon" />
         <input
           id="query"
           type="search"
@@ -52,13 +54,13 @@ export function SearchPanel({ sessionId, onSessionExpired }: Props) {
             <option key={k} value={k}>Top {k}</option>
           ))}
         </select>
-        <button type="submit" className="button" disabled={loading || !sessionId || query.trim() === ''}>
+        <button type="submit" className="button button--primary" disabled={loading || !sessionId || query.trim() === ''}>
           {loading ? 'Searching…' : 'Search'}
         </button>
       </form>
 
       {!sessionId && <p className="muted">Add your CV in step 1 first.</p>}
-      {error && <p className="error">{error}</p>}
+      {error && <p className="banner banner--error">{error}</p>}
 
       {result && (
         <div className="search-results">

@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react'
 import { getInfo, getSession, type Info, type Session } from './api'
 import { DocumentsPanel } from './components/DocumentsPanel'
+import { GitHubIcon, SearchIcon, SparkleIcon } from './components/Icons'
 import { MatchPanel } from './components/MatchPanel'
 import { SearchPanel } from './components/SearchPanel'
-import { StatusBar } from './components/StatusBar'
+import { StatusBanner, StatusPill } from './components/StatusBar'
 import { useApiStatus } from './useApiStatus'
 
 type Tab = 'match' | 'search'
+
+const repoUrl = 'https://github.com/ShivamMissar/Generalised_Rag_Engine'
 
 // The session ID is kept for this browser tab only, so a page refresh doesn't lose the uploaded CV.
 const sessionKey = 'rag-session-id'
@@ -63,44 +66,77 @@ function App() {
   }
 
   return (
-    <div className="app">
-      <header className="app__header">
-        <h1>Job Match Assistant</h1>
-        <p className="muted">
-          Upload your CV, paste a job ad, and get a requirement-by-requirement match report where every claim cites your
-          own documents.
-        </p>
-      </header>
-
-      <StatusBar status={status} info={info} />
-
-      <DocumentsPanel info={info} session={session} notice={notice} onSession={onSession} />
-
-      <div className="step-heading step-heading--outside">
-        <span className="step-number" aria-hidden="true">2</span>
-        <nav className="tabs" role="tablist" aria-label="What to do with your documents">
-          <button type="button" role="tab" aria-selected={tab === 'match'} className="tab" onClick={() => setTab('match')}>
-            Match a job ad
-          </button>
-          <button type="button" role="tab" aria-selected={tab === 'search'} className="tab" onClick={() => setTab('search')}>
-            Search your documents
-          </button>
-        </nav>
+    <>
+      {/* The moving coloured light and grain behind the glass panels. Purely decorative. */}
+      <div className="backdrop" aria-hidden="true">
+        <span className="blob blob--1" />
+        <span className="blob blob--2" />
+        <span className="blob blob--3" />
+        <span className="blob blob--4" />
+        <span className="grain" />
       </div>
 
-      {/* Both panels stay mounted, so switching tabs keeps what you typed and the last results. */}
-      <div hidden={tab !== 'match'}>
-        <MatchPanel sessionId={session?.sessionId ?? null} onSessionExpired={onSessionExpired} />
-      </div>
-      <div hidden={tab !== 'search'}>
-        <SearchPanel sessionId={session?.sessionId ?? null} onSessionExpired={onSessionExpired} />
-      </div>
+      <div className="app">
+        <header className="topbar glass">
+          <span className="brand">
+            <span className="brand__mark" aria-hidden="true"><SparkleIcon className="icon icon--small" /></span>
+            Job Match
+          </span>
+          <StatusPill status={status} info={info} />
+          <a className="topbar__link" href={repoUrl} target="_blank" rel="noreferrer">
+            <GitHubIcon className="icon icon--small" /> <span className="hide-small">Source</span>
+          </a>
+        </header>
 
-      <footer className="app__footer muted">
-        Built by Shivam Missar with C#/.NET, React and retrieval-augmented generation (RAG) ·{' '}
-        <a href="https://github.com/ShivamMissar/Generalised_Rag_Engine" target="_blank" rel="noreferrer">How it works, on GitHub</a>
-      </footer>
-    </div>
+        <section className="hero">
+          <p className="eyebrow">Retrieval-augmented generation · C#/.NET · React</p>
+          <h1>
+            See how your CV <span className="gradient-text">really matches</span> the job.
+          </h1>
+          <p className="hero__lede">
+            Upload your CV, paste a job ad, and get a requirement-by-requirement report where every claim is backed by
+            a quote from your own documents.
+          </p>
+          <ol className="steps-strip">
+            <li><span>1</span>Add your CV</li>
+            <li><span>2</span>Paste a job ad</li>
+            <li><span>3</span>Get a cited report</li>
+          </ol>
+        </section>
+
+        <StatusBanner status={status} />
+
+        <DocumentsPanel info={info} session={session} notice={notice} onSession={onSession} />
+
+        <section className="step-two" aria-label="Step 2">
+          <div className="step-two__header">
+            <span className="step-badge" aria-hidden="true">2</span>
+            <div className="segmented" role="tablist" aria-label="What to do with your documents" data-active={tab}>
+              <span className="segmented__thumb" aria-hidden="true" />
+              <button type="button" role="tab" aria-selected={tab === 'match'} onClick={() => setTab('match')}>
+                <SparkleIcon className="icon icon--small" /> Match a job ad
+              </button>
+              <button type="button" role="tab" aria-selected={tab === 'search'} onClick={() => setTab('search')}>
+                <SearchIcon className="icon icon--small" /> Search your documents
+              </button>
+            </div>
+          </div>
+
+          {/* Both panels stay mounted, so switching tabs keeps what you typed and the last results. */}
+          <div hidden={tab !== 'match'}>
+            <MatchPanel sessionId={session?.sessionId ?? null} onSessionExpired={onSessionExpired} />
+          </div>
+          <div hidden={tab !== 'search'}>
+            <SearchPanel sessionId={session?.sessionId ?? null} onSessionExpired={onSessionExpired} />
+          </div>
+        </section>
+
+        <footer className="footer">
+          Built by Shivam Missar with C#/.NET, React and retrieval-augmented generation ·{' '}
+          <a href={repoUrl} target="_blank" rel="noreferrer">How it works</a>
+        </footer>
+      </div>
+    </>
   )
 }
 

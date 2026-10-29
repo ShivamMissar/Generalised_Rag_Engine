@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { parseReport, type Segment, type Status } from '../report'
+import { parseReport, type ReportLine, type Segment, type Status } from '../report'
 
 type Props = {
   report: string
@@ -8,13 +8,16 @@ type Props = {
 }
 
 const statusClass: Record<Status, string> = {
-  'Met': 'badge--good',
-  'Partly met': 'badge--partial',
-  'Not met': 'badge--bad',
+  'Met': 'good',
+  'Partly met': 'partial',
+  'Not met': 'bad',
 }
 
-/** The AI's match report, with a rating headline, status badges and clickable citations. */
+/** The AI's match report: a rating, a meter of the verdicts, a badge per requirement, and clickable citations. */
 export function Report({ report, evidenceCount, onCite }: Props) {
+  const lines = parseReport(report)
+  const requirements = lines.filter((l): l is Extract<ReportLine, { kind: 'requirement' }> => l.kind === 'requirement')
+
   const renderSegments = (segments: Segment[]): ReactNode[] =>
     segments.map((segment, i) =>
       segment.kind === 'text' ? (
@@ -31,14 +34,17 @@ export function Report({ report, evidenceCount, onCite }: Props) {
 
   return (
     <div className="report">
-      {parseReport(report).map((line, i) => {
+      {lines.map((line, i) => {
         switch (line.kind) {
           case 'overall':
             return (
               <div key={i} className={`overall overall--${line.rating.toLowerCase()}`}>
-                <span className="overall__label">Overall match</span>
-                <span className="overall__rating">{line.rating}</span>
+                <div className="overall__head">
+                  <span className="overall__label">Overall match</span>
+                  <span className="overall__rating">{line.rating}</span>
+                </div>
                 <p>{renderSegments(line.segments)}</p>
+                {requirements.length > 0 && <Meter requirements={requirements} />}
               </div>
             )
           case 'heading':
@@ -50,8 +56,8 @@ export function Report({ report, evidenceCount, onCite }: Props) {
             )
           case 'requirement':
             return (
-              <div key={i} className="requirement">
-                <span className={`badge ${statusClass[line.status]}`}>{line.status}</span>
+              <div key={i} className={`requirement requirement--${statusClass[line.status]}`}>
+                <span className={`badge badge--${statusClass[line.status]}`}>{line.status}</span>
                 <div>
                   <strong>{line.requirement}</strong>
                   {line.segments.length > 0 && <p>{renderSegments(line.segments)}</p>}
@@ -64,6 +70,30 @@ export function Report({ report, evidenceCount, onCite }: Props) {
             return <p key={i}>{renderSegments(line.segments)}</p>
         }
       })}
+    </div>
+  )
+}
+
+/** One coloured segment per requirement, in report order, with a count of each verdict. */
+function Meter({ requirements }: { requirements: Extract<ReportLine, { kind: 'requirement' }>[] }) {
+  const count = (status: Status) => requirements.filter((r) => r.status === status).length
+  const met = count('Met')
+  const partly = count('Partly met')
+  const notMet = count('Not met')
+
+  return (
+    <div className="meter">
+      <div className="meter__bar" role="img" aria-label={`${met} met, ${partly} partly met, ${notMet} not met`}>
+        {requirements.map((r, i) => (
+          <span key={i} className={`meter__segment meter__segment--${statusClass[r.status]}`} title={`${r.requirement}: ${r.status}`}
+            style={{ animationDelay: `${i * 70}ms` }} />
+        ))}
+      </div>
+      <p className="meter__legend" aria-hidden="true">
+        <span><i className="dot dot--good" />{met} met</span>
+        {partly > 0 && <span><i className="dot dot--partial" />{partly} partly met</span>}
+        <span><i className="dot dot--bad" />{notMet} not met</span>
+      </p>
     </div>
   )
 }
