@@ -19,6 +19,15 @@ export const FileIcon = (p: IconProps) => (
   <Svg {...p}><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M9 13h6M9 17h4" /></Svg>
 )
 
+/** The app's own mark: two overlapping circles, a CV and a job meeting in the middle. */
+export const MatchMark = ({ className }: IconProps) => (
+  <svg className={className ?? 'icon'} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <circle cx="9" cy="12" r="6" stroke="currentColor" strokeWidth="2" />
+    <circle cx="15" cy="12" r="6" stroke="currentColor" strokeWidth="2" />
+    <path d="M12 7.2a6 6 0 0 1 0 9.6a6 6 0 0 1 0-9.6z" fill="currentColor" />
+  </svg>
+)
+
 export const SparkleIcon = (p: IconProps) => (
   <Svg {...p}><path d="M12 3l1.8 4.9L19 9.7l-5.2 1.8L12 16.4l-1.8-4.9L5 9.7l5.2-1.8z" /><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z" /></Svg>
 )

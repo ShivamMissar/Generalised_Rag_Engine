@@ -1,5 +1,6 @@
 /* Job Match: frosted-glass panels floating over a slow aurora of coloured light, with a fine grain texture.
-   Dark by design, because glass reads best against deep, glowing colour. */
+   Dark by design, because glass reads best against deep, glowing colour. The palette (blue, violet, rose) nods to
+   Google Gemini, the AI behind the live demo, without using any of Google's logos. */
 
 :root {
   --bg: #07060b;
@@ -14,11 +15,11 @@
   --inner: rgba(255, 255, 255, 0.045);
   --inner-border: rgba(255, 255, 255, 0.09);
 
-  --orange: #ff8a3d;
-  --magenta: #ff3d81;
-  --violet: #8b5cf6;
-  --teal: #2dd4bf;
-  --accent-gradient: linear-gradient(115deg, #ffb057 0%, #ff6a3d 30%, #ff3d81 62%, #a66bff 100%);
+  --blue: #4f8cff;
+  --violet: #9a6bff;
+  --rose: #f0729a;
+  --cyan: #49c6ff;
+  --accent-gradient: linear-gradient(115deg, #4f8cff 0%, #7a7cff 35%, #b06bff 65%, #f0729a 100%);
 
   --good: #4ade9a;
   --good-bg: rgba(74, 222, 154, 0.14);
@@ -57,11 +58,11 @@ a {
 }
 
 ::selection {
-  background: rgba(255, 106, 61, 0.45);
+  background: rgba(79, 140, 255, 0.45);
 }
 
 :focus-visible {
-  outline: 2px solid #ffb37a;
+  outline: 2px solid #a8c2ff;
   outline-offset: 3px;
   border-radius: 8px;
 }
@@ -103,10 +104,10 @@ a {
   will-change: transform;
 }
 
-.blob--1 { width: 560px; height: 560px; left: -140px; top: -120px; background: var(--orange); animation: drift-1 26s ease-in-out infinite alternate; }
-.blob--2 { width: 520px; height: 520px; right: -160px; top: 120px; background: var(--magenta); opacity: 0.45; animation: drift-2 32s ease-in-out infinite alternate; }
+.blob--1 { width: 560px; height: 560px; left: -140px; top: -120px; background: var(--blue); animation: drift-1 26s ease-in-out infinite alternate; }
+.blob--2 { width: 520px; height: 520px; right: -160px; top: 120px; background: var(--rose); opacity: 0.45; animation: drift-2 32s ease-in-out infinite alternate; }
 .blob--3 { width: 640px; height: 640px; left: 20%; bottom: -320px; background: var(--violet); opacity: 0.5; animation: drift-3 38s ease-in-out infinite alternate; }
-.blob--4 { width: 380px; height: 380px; right: 12%; bottom: 10%; background: var(--teal); opacity: 0.22; animation: drift-1 44s ease-in-out infinite alternate-reverse; }
+.blob--4 { width: 380px; height: 380px; right: 12%; bottom: 10%; background: var(--cyan); opacity: 0.22; animation: drift-1 44s ease-in-out infinite alternate-reverse; }
 
 @keyframes drift-1 { to { transform: translate(140px, 90px) scale(1.15); } }
 @keyframes drift-2 { to { transform: translate(-120px, 160px) scale(0.9); } }
@@ -208,7 +209,7 @@ a {
   border-radius: 9px;
   background: var(--accent-gradient);
   color: #fff;
-  box-shadow: 0 6px 20px -6px rgba(255, 61, 129, 0.8);
+  box-shadow: 0 6px 20px -6px rgba(112, 108, 255, 0.8);
 }
 
 .topbar__link {
@@ -368,7 +369,7 @@ a {
   font-size: 1.05rem;
   color: #fff;
   background: var(--accent-gradient);
-  box-shadow: 0 10px 30px -10px rgba(255, 61, 129, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  box-shadow: 0 10px 30px -10px rgba(112, 108, 255, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 .panel__row {
@@ -404,7 +405,7 @@ a {
 .button--primary {
   background: var(--accent-gradient);
   color: #fff;
-  box-shadow: 0 12px 30px -12px rgba(255, 61, 129, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  box-shadow: 0 12px 30px -12px rgba(112, 108, 255, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 /* A streak of light that sweeps across the button on hover. */
@@ -419,7 +420,7 @@ a {
 
 .button--primary:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 18px 40px -14px rgba(255, 61, 129, 1), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  box-shadow: 0 18px 40px -14px rgba(112, 108, 255, 1), inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 .button--primary:hover:not(:disabled)::after {
@@ -448,14 +449,14 @@ a {
 
 .link {
   font: inherit;
-  color: #ffb37a;
+  color: #a8c2ff;
   background: none;
   border: none;
   padding: 0;
   cursor: pointer;
   font-weight: 600;
   text-decoration: underline;
-  text-decoration-color: rgba(255, 179, 122, 0.4);
+  text-decoration-color: rgba(168, 194, 255, 0.4);
   text-underline-offset: 3px;
 }
 
@@ -508,9 +509,9 @@ textarea {
 
 textarea:focus, input:focus, select:focus {
   outline: none;
-  border-color: rgba(255, 138, 61, 0.7);
+  border-color: rgba(79, 140, 255, 0.7);
   background: rgba(0, 0, 0, 0.36);
-  box-shadow: 0 0 0 4px rgba(255, 106, 61, 0.18);
+  box-shadow: 0 0 0 4px rgba(79, 140, 255, 0.18);
 }
 
 select option {
@@ -541,13 +542,13 @@ select option {
 }
 
 .dropzone:hover {
-  border-color: rgba(255, 138, 61, 0.5);
+  border-color: rgba(79, 140, 255, 0.5);
 }
 
 .dropzone--active {
   border-style: solid;
-  border-color: var(--orange);
-  background: rgba(255, 106, 61, 0.1);
+  border-color: var(--blue);
+  background: rgba(79, 140, 255, 0.1);
   transform: scale(1.01);
 }
 
@@ -559,7 +560,7 @@ select option {
   border-radius: 50%;
   color: #fff;
   background: var(--accent-gradient);
-  box-shadow: 0 16px 40px -14px rgba(255, 61, 129, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  box-shadow: 0 16px 40px -14px rgba(112, 108, 255, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.4);
   animation: float 5s ease-in-out infinite;
 }
 
@@ -631,8 +632,8 @@ select option {
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  background: rgba(255, 138, 61, 0.16);
-  color: #ffb37a;
+  background: rgba(79, 140, 255, 0.16);
+  color: #a8c2ff;
 }
 
 .file-chip__name {
@@ -788,13 +789,13 @@ select option {
 }
 
 .is-done .progress__marker { border-color: var(--good); color: var(--good); background: var(--good-bg); }
-.is-active .progress__marker { border-color: var(--orange); }
+.is-active .progress__marker { border-color: var(--blue); }
 
 .pulse-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--orange);
+  background: var(--blue);
   animation: blink 1s ease-in-out infinite;
 }
 
@@ -850,7 +851,7 @@ select option {
 }
 
 .overall {
-  --glow: var(--orange);
+  --glow: var(--blue);
   position: relative;
   padding: 1.2rem 1.3rem;
   border-radius: var(--radius);
@@ -1007,9 +1008,9 @@ select option {
   font-size: 0.72rem;
   font-weight: 700;
   line-height: 1;
-  color: #ffd1ad;
-  background: rgba(255, 138, 61, 0.18);
-  border: 1px solid rgba(255, 138, 61, 0.35);
+  color: #d3dfff;
+  background: rgba(79, 140, 255, 0.18);
+  border: 1px solid rgba(79, 140, 255, 0.35);
   border-radius: 6px;
   padding: 0.2rem 0.42rem;
   margin: 0 0.12rem;
@@ -1019,7 +1020,7 @@ select option {
 }
 
 .cite:hover {
-  background: rgba(255, 138, 61, 0.35);
+  background: rgba(79, 140, 255, 0.35);
   transform: translateY(-1px);
 }
 
@@ -1042,9 +1043,9 @@ select option {
 }
 
 .evidence--highlighted {
-  border-color: rgba(255, 138, 61, 0.8);
-  background: rgba(255, 138, 61, 0.12);
-  box-shadow: 0 0 0 4px rgba(255, 106, 61, 0.15), 0 0 40px -10px rgba(255, 106, 61, 0.8);
+  border-color: rgba(79, 140, 255, 0.8);
+  background: rgba(79, 140, 255, 0.12);
+  box-shadow: 0 0 0 4px rgba(79, 140, 255, 0.15), 0 0 40px -10px rgba(79, 140, 255, 0.8);
 }
 
 .evidence__header {

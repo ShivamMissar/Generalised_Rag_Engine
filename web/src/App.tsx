@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { getInfo, getSession, type Info, type Session } from './api'
 import { DocumentsPanel } from './components/DocumentsPanel'
-import { GitHubIcon, SearchIcon, SparkleIcon } from './components/Icons'
+import { GitHubIcon, MatchMark, SearchIcon, SparkleIcon } from './components/Icons'
 import { MatchPanel } from './components/MatchPanel'
 import { SearchPanel } from './components/SearchPanel'
 import { StatusBanner, StatusPill } from './components/StatusBar'
@@ -79,7 +79,7 @@ function App() {
       <div className="app">
         <header className="topbar glass">
           <span className="brand">
-            <span className="brand__mark" aria-hidden="true"><SparkleIcon className="icon icon--small" /></span>
+            <span className="brand__mark" aria-hidden="true"><MatchMark className="icon icon--small" /></span>
             Job Match
           </span>
           <StatusPill status={status} info={info} />
