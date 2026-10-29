@@ -2,12 +2,14 @@
   <Folder Name="/src/">
     <Project Path="src/Rag.Api/Rag.Api.csproj" />
     <Project Path="src/Rag.Core/Rag.Core.csproj" />
+    <Project Path="src/Rag.Documents/Rag.Documents.csproj" />
     <Project Path="src/Rag.Playground/Rag.Playground.csproj" />
     <Project Path="src/Rag.Sqlite/Rag.Sqlite.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Rag.Api.Tests/Rag.Api.Tests.csproj" />
     <Project Path="tests/Rag.Core.Tests/Rag.Core.Tests.csproj" />
+    <Project Path="tests/Rag.Documents.Tests/Rag.Documents.Tests.csproj" />
     <Project Path="tests/Rag.Sqlite.Tests/Rag.Sqlite.Tests.csproj" />
     <Project Path="tests/Rag.Testing/Rag.Testing.csproj" />
   </Folder>
