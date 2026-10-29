@@ -3,8 +3,8 @@ import { ApiError, matchJobAd, type MatchResponse } from '../api'
 import sampleJobAd from '../../../samples/job-ads/backend-developer.md?raw'
 import { AnalysisProgress } from './AnalysisProgress'
 import { EvidenceCard } from './EvidenceCard'
-import { SparkleIcon } from './Icons'
 import { Report } from './Report'
+import { Section } from './Section'
 
 type Props = {
   /** The visitor's session, or null if they haven't added a CV yet. */
@@ -12,7 +12,7 @@ type Props = {
   onSessionExpired: () => void
 }
 
-/** Paste a job ad, get the AI's match report alongside the evidence it was given. */
+/** Section 02 (paste a job ad) and section 03 (the verdict, with the sources it cites). */
 export function MatchPanel({ sessionId, onSessionExpired }: Props) {
   const [jobAd, setJobAd] = useState('')
   const [result, setResult] = useState<MatchResponse | null>(null)
@@ -21,7 +21,7 @@ export function MatchPanel({ sessionId, onSessionExpired }: Props) {
   const [seconds, setSeconds] = useState(0)
   const [highlighted, setHighlighted] = useState<number | null>(null)
 
-  // A running timer while the AI works, since a report takes 15–30 seconds.
+  // A running count while the AI works, since a report takes 15–30 seconds.
   useEffect(() => {
     if (!loading) return
     const timer = setInterval(() => setSeconds((s) => s + 1), 1000)
@@ -36,6 +36,8 @@ export function MatchPanel({ sessionId, onSessionExpired }: Props) {
     setResult(null)
     try {
       setResult(await matchJobAd(jobAd, sessionId))
+      // Bring the verdict into view once it's ready.
+      requestAnimationFrame(() => document.getElementById('verdict')?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
     } catch (e) {
       if (e instanceof ApiError && e.sessionExpired) {
         onSessionExpired()
@@ -47,7 +49,7 @@ export function MatchPanel({ sessionId, onSessionExpired }: Props) {
     }
   }
 
-  // Clicking a citation like [2] scrolls to evidence card 2 and highlights it briefly.
+  // Clicking a citation like [2] scrolls to source 2 and highlights it briefly.
   const onCite = (n: number) => {
     setHighlighted(n)
     document.getElementById(`evidence-${n}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
@@ -55,53 +57,62 @@ export function MatchPanel({ sessionId, onSessionExpired }: Props) {
   }
 
   return (
-    <section className="glass panel">
-      <div className="field">
-        <div className="field__label-row">
-          <label htmlFor="job-ad">Job ad</label>
-          <button type="button" className="link" onClick={() => setJobAd(sampleJobAd)}>
-            Use a sample job ad
-          </button>
+    <>
+      <Section
+        number="02"
+        title="The job ad"
+        aside={<p>Paste the whole ad. Bullet-pointed requirements work best, since each bullet is checked on its own.</p>}
+      >
+        <div className="field">
+          <div className="field__row">
+            <label htmlFor="job-ad" className="label">Job ad</label>
+            <button type="button" className="text-button" onClick={() => setJobAd(sampleJobAd)}>
+              Use a sample ad
+            </button>
+          </div>
+          <textarea
+            id="job-ad"
+            value={jobAd}
+            onChange={(e) => setJobAd(e.target.value)}
+            placeholder="Paste a job ad here…"
+            rows={11}
+          />
         </div>
-        <textarea
-          id="job-ad"
-          value={jobAd}
-          onChange={(e) => setJobAd(e.target.value)}
-          placeholder="Paste a job ad here. Bullet-pointed requirements work best."
-          rows={10}
-        />
-      </div>
 
-      <div className="actions">
-        <button type="button" className="button button--primary button--large" onClick={onAnalyse} disabled={loading || !sessionId || jobAd.trim() === ''}>
-          <SparkleIcon className="icon icon--small" />
-          {loading ? 'Analysing…' : 'Analyse match'}
-        </button>
-        {!sessionId && <span className="muted">Add your CV in step 1 first.</span>}
-      </div>
+        <div className="actions">
+          <button type="button" className="button button--accent" onClick={onAnalyse} disabled={loading || !sessionId || jobAd.trim() === ''}>
+            {loading ? 'Checking…' : 'Check the match →'}
+          </button>
+          {!sessionId && <span className="small">Add your CV in 01 first.</span>}
+        </div>
 
-      {loading && <AnalysisProgress seconds={seconds} />}
-      {error && <p className="banner banner--error">{error}</p>}
+        {loading && <AnalysisProgress seconds={seconds} />}
+        {error && <p className="notice notice--error">{error}</p>}
+      </Section>
 
       {result && (
-        <div className="results">
-          <div className="results__main">
-            <h2 className="results__title">Your match report</h2>
-            <p className="muted">
-              Searched your documents for {result.requirements.length}{' '}
-              {result.requirements.length === 1 ? 'requirement' : 'requirements'}. Click a number to see its evidence.
+        <Section
+          id="verdict"
+          number="03"
+          title="The verdict"
+          aside={
+            <p>
+              {result.requirements.length} {result.requirements.length === 1 ? 'requirement' : 'requirements'} checked.
+              Click a red number to see the line of your CV behind it.
             </p>
+          }
+        >
+          <div className="results">
             <Report report={result.report} evidenceCount={result.evidence.length} onCite={onCite} />
+            <aside className="sources" aria-label="Sources">
+              <h3 className="label">Sources from your CV</h3>
+              {result.evidence.map((hit, i) => (
+                <EvidenceCard key={hit.chunkId} hit={hit} number={i + 1} highlighted={highlighted === i + 1} />
+              ))}
+            </aside>
           </div>
-          <aside className="results__side">
-            <h2 className="results__title">Evidence</h2>
-            <p className="muted">The parts of your documents the AI was given.</p>
-            {result.evidence.map((hit, i) => (
-              <EvidenceCard key={hit.chunkId} hit={hit} number={i + 1} highlighted={highlighted === i + 1} />
-            ))}
-          </aside>
-        </div>
+        </Section>
       )}
-    </section>
+    </>
   )
 }

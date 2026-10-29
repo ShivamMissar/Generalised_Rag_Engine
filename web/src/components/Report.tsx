@@ -7,28 +7,28 @@ type Props = {
   onCite: (n: number) => void
 }
 
-const statusClass: Record<Status, string> = {
-  'Met': 'good',
-  'Partly met': 'partial',
-  'Not met': 'bad',
-}
+type Requirement = Extract<ReportLine, { kind: 'requirement' }>
 
-/** The AI's match report: a rating, a meter of the verdicts, a badge per requirement, and clickable citations. */
+// Verdicts are shown as words, not traffic-light colours: only "missing" uses the accent colour.
+const statusLabel: Record<Status, string> = { 'Met': 'Met', 'Partly met': 'Partly', 'Not met': 'Missing' }
+const statusClass: Record<Status, string> = { 'Met': 'met', 'Partly met': 'partly', 'Not met': 'missing' }
+
+/** The AI's match report: a one-word verdict, a row of squares, a line per requirement, and footnote-style citations. */
 export function Report({ report, evidenceCount, onCite }: Props) {
   const lines = parseReport(report)
-  const requirements = lines.filter((l): l is Extract<ReportLine, { kind: 'requirement' }> => l.kind === 'requirement')
+  const requirements = lines.filter((l): l is Requirement => l.kind === 'requirement')
 
   const renderSegments = (segments: Segment[]): ReactNode[] =>
     segments.map((segment, i) =>
       segment.kind === 'text' ? (
         <span key={i}>{segment.text}</span>
       ) : segment.n >= 1 && segment.n <= evidenceCount ? (
-        <button key={i} type="button" className="cite" onClick={() => onCite(segment.n)} title={`Show evidence ${segment.n}`}>
+        <button key={i} type="button" className="cite" onClick={() => onCite(segment.n)} title={`Show source ${segment.n}`}>
           {segment.n}
         </button>
       ) : (
         // A citation number with no matching evidence (the model made it up). Shown, but not clickable.
-        <span key={i} className="cite cite--missing" title="No evidence with this number">{segment.n}</span>
+        <span key={i} className="cite cite--missing" title="No source with this number">{segment.n}</span>
       ),
     )
 
@@ -38,29 +38,28 @@ export function Report({ report, evidenceCount, onCite }: Props) {
         switch (line.kind) {
           case 'overall':
             return (
-              <div key={i} className={`overall overall--${line.rating.toLowerCase()}`}>
-                <div className="overall__head">
-                  <span className="overall__label">Overall match</span>
-                  <span className="overall__rating">{line.rating}</span>
-                </div>
-                <p>{renderSegments(line.segments)}</p>
-                {requirements.length > 0 && <Meter requirements={requirements} />}
+              <div key={i} className="verdict">
+                <p className="label">Overall</p>
+                <p className={`verdict__word verdict__word--${line.rating.toLowerCase()}`}>{line.rating}.</p>
+                {requirements.length > 0 && <Tally requirements={requirements} />}
+                <p className="verdict__summary">{renderSegments(line.segments)}</p>
               </div>
             )
           case 'heading':
+            // The requirement rows below speak for themselves, so the "Requirements" heading becomes a small label.
             return (
-              <div key={i}>
-                <h3 className="report__heading">{line.title}</h3>
+              <div key={i} className="report__block">
+                <h3 className="label">{line.title}</h3>
                 {line.segments.length > 0 && <p>{renderSegments(line.segments)}</p>}
               </div>
             )
           case 'requirement':
             return (
               <div key={i} className={`requirement requirement--${statusClass[line.status]}`}>
-                <span className={`badge badge--${statusClass[line.status]}`}>{line.status}</span>
+                <span className="requirement__status">{statusLabel[line.status]}</span>
                 <div>
-                  <strong>{line.requirement}</strong>
-                  {line.segments.length > 0 && <p>{renderSegments(line.segments)}</p>}
+                  <p className="requirement__title">{line.requirement}</p>
+                  {line.segments.length > 0 && <p className="requirement__note">{renderSegments(line.segments)}</p>}
                 </div>
               </div>
             )
@@ -74,25 +73,22 @@ export function Report({ report, evidenceCount, onCite }: Props) {
   )
 }
 
-/** One coloured segment per requirement, in report order, with a count of each verdict. */
-function Meter({ requirements }: { requirements: Extract<ReportLine, { kind: 'requirement' }>[] }) {
-  const count = (status: Status) => requirements.filter((r) => r.status === status).length
-  const met = count('Met')
-  const partly = count('Partly met')
-  const notMet = count('Not met')
+/** One square per requirement, in report order: filled for met, half-filled for partly, red outline for missing. */
+function Tally({ requirements }: { requirements: Requirement[] }) {
+  const met = requirements.filter((r) => r.status === 'Met').length
+  const partly = requirements.filter((r) => r.status === 'Partly met').length
+  const missing = requirements.length - met - partly
 
   return (
-    <div className="meter">
-      <div className="meter__bar" role="img" aria-label={`${met} met, ${partly} partly met, ${notMet} not met`}>
+    <div className="tally">
+      <div className="tally__squares" role="img" aria-label={`${met} met, ${partly} partly met, ${missing} missing`}>
         {requirements.map((r, i) => (
-          <span key={i} className={`meter__segment meter__segment--${statusClass[r.status]}`} title={`${r.requirement}: ${r.status}`}
-            style={{ animationDelay: `${i * 70}ms` }} />
+          <span key={i} className={`tally__square tally__square--${statusClass[r.status]}`} title={`${r.requirement}: ${r.status}`}
+            style={{ animationDelay: `${i * 60}ms` }} />
         ))}
       </div>
-      <p className="meter__legend" aria-hidden="true">
-        <span><i className="dot dot--good" />{met} met</span>
-        {partly > 0 && <span><i className="dot dot--partial" />{partly} partly met</span>}
-        <span><i className="dot dot--bad" />{notMet} not met</span>
+      <p className="mono small" aria-hidden="true">
+        {met} of {requirements.length} met{partly > 0 ? ` · ${partly} partly` : ''}{missing > 0 ? ` · ${missing} missing` : ''}
       </p>
     </div>
   )

@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { ApiError, search, type SearchResponse } from '../api'
 import { EvidenceCard } from './EvidenceCard'
-import { SearchIcon } from './Icons'
+import { Section } from './Section'
 
 type Props = {
   /** The visitor's session, or null if they haven't added a CV yet. */
@@ -9,7 +9,7 @@ type Props = {
   onSessionExpired: () => void
 }
 
-/** Ask a question and see which parts of your documents match best, with their scores. */
+/** Section 04: ask a question and see which parts of your documents match best, with their scores. */
 export function SearchPanel({ sessionId, onSessionExpired }: Props) {
   const [query, setQuery] = useState('')
   const [topK, setTopK] = useState(5)
@@ -37,10 +37,13 @@ export function SearchPanel({ sessionId, onSessionExpired }: Props) {
   }
 
   return (
-    <section className="glass panel">
+    <Section
+      number="04"
+      title="Search your CV"
+      aside={<p>The same search the verdict uses, on its own: type a skill or question and see which parts of your CV come closest.</p>}
+    >
       <form className="search" onSubmit={onSubmit}>
         <label htmlFor="query" className="visually-hidden">Question</label>
-        <SearchIcon className="icon search__icon" />
         <input
           id="query"
           type="search"
@@ -54,24 +57,24 @@ export function SearchPanel({ sessionId, onSessionExpired }: Props) {
             <option key={k} value={k}>Top {k}</option>
           ))}
         </select>
-        <button type="submit" className="button button--primary" disabled={loading || !sessionId || query.trim() === ''}>
+        <button type="submit" className="button" disabled={loading || !sessionId || query.trim() === ''}>
           {loading ? 'Searching…' : 'Search'}
         </button>
       </form>
 
-      {!sessionId && <p className="muted">Add your CV in step 1 first.</p>}
-      {error && <p className="banner banner--error">{error}</p>}
+      {!sessionId && <p className="small">Add your CV in 01 first.</p>}
+      {error && <p className="notice notice--error">{error}</p>}
 
       {result && (
         <div className="search-results">
-          <p className="muted">
-            Best matches for “{result.query}”. Scores only mean something compared with each other: higher is closer.
+          <p className="small">
+            Closest matches for “{result.query}”. Scores only mean something next to each other: higher is closer.
           </p>
           {result.results.map((hit) => (
             <EvidenceCard key={hit.chunkId} hit={hit} />
           ))}
         </div>
       )}
-    </section>
+    </Section>
   )
 }

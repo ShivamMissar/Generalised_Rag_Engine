@@ -1,13 +1,11 @@
 import { useEffect, useState } from 'react'
 import { getInfo, getSession, type Info, type Session } from './api'
 import { DocumentsPanel } from './components/DocumentsPanel'
-import { GitHubIcon, MatchMark, SearchIcon, SparkleIcon } from './components/Icons'
 import { MatchPanel } from './components/MatchPanel'
 import { SearchPanel } from './components/SearchPanel'
-import { StatusBanner, StatusPill } from './components/StatusBar'
+import { Section } from './components/Section'
+import { StatusBanner, StatusLine } from './components/StatusBar'
 import { useApiStatus } from './useApiStatus'
-
-type Tab = 'match' | 'search'
 
 const repoUrl = 'https://github.com/ShivamMissar/Generalised_Rag_Engine'
 
@@ -36,7 +34,6 @@ function App() {
   const [info, setInfo] = useState<Info | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
-  const [tab, setTab] = useState<Tab>('match')
 
   // Once the server is up: load its settings, and restore the session from before a refresh if it's still alive.
   useEffect(() => {
@@ -65,78 +62,51 @@ function App() {
     setNotice('Your documents expired or were removed, so please add them again.')
   }
 
+  const sessionId = session?.sessionId ?? null
+
   return (
-    <>
-      {/* The moving coloured light and grain behind the glass panels. Purely decorative. */}
-      <div className="backdrop" aria-hidden="true">
-        <span className="blob blob--1" />
-        <span className="blob blob--2" />
-        <span className="blob blob--3" />
-        <span className="blob blob--4" />
-        <span className="grain" />
-      </div>
+    <div className="page">
+      <header className="masthead">
+        <span className="wordmark">Job Match</span>
+        <StatusLine status={status} info={info} />
+        <a className="masthead__link" href={repoUrl} target="_blank" rel="noreferrer">Source ↗</a>
+      </header>
 
-      <div className="app">
-        <header className="topbar glass">
-          <span className="brand">
-            <span className="brand__mark" aria-hidden="true"><MatchMark className="icon icon--small" /></span>
-            Job Match
-          </span>
-          <StatusPill status={status} info={info} />
-          <a className="topbar__link" href={repoUrl} target="_blank" rel="noreferrer">
-            <GitHubIcon className="icon icon--small" /> <span className="hide-small">Source</span>
-          </a>
-        </header>
-
-        <section className="hero">
-          <p className="eyebrow">Retrieval-augmented generation · C#/.NET · React</p>
-          <h1>
-            See how your CV <span className="gradient-text">really matches</span> the job.
-          </h1>
-          <p className="hero__lede">
-            Upload your CV, paste a job ad, and get a requirement-by-requirement report where every claim is backed by
-            a quote from your own documents.
+      <section className="intro">
+        <h1 className="intro__title">Does your CV answer the job&nbsp;ad?</h1>
+        <div className="intro__text">
+          <p>
+            Upload your CV and paste a job ad. You get the ad broken down into its requirements, a verdict on each one,
+            and the exact lines of your CV that back it up — or the honest admission that nothing does.
           </p>
-          <ol className="steps-strip">
-            <li><span>1</span>Add your CV</li>
-            <li><span>2</span>Paste a job ad</li>
-            <li><span>3</span>Get a cited report</li>
-          </ol>
-        </section>
+          <p className="intro__note">
+            I built this to check my own applications before sending them: which requirements my CV actually proves,
+            and which it only hints at.
+            <span className="intro__signature">Shivam Missar</span>
+          </p>
+        </div>
+      </section>
 
-        <StatusBanner status={status} />
+      <StatusBanner status={status} />
 
+      <Section number="01" title="Your CV" aside={<p>Your CV, plus any project write-ups you'd like considered.</p>}>
         <DocumentsPanel info={info} session={session} notice={notice} onSession={onSession} />
+      </Section>
 
-        <section className="step-two" aria-label="Step 2">
-          <div className="step-two__header">
-            <span className="step-badge" aria-hidden="true">2</span>
-            <div className="segmented" role="tablist" aria-label="What to do with your documents" data-active={tab}>
-              <span className="segmented__thumb" aria-hidden="true" />
-              <button type="button" role="tab" aria-selected={tab === 'match'} onClick={() => setTab('match')}>
-                <SparkleIcon className="icon icon--small" /> Match a job ad
-              </button>
-              <button type="button" role="tab" aria-selected={tab === 'search'} onClick={() => setTab('search')}>
-                <SearchIcon className="icon icon--small" /> Search your documents
-              </button>
-            </div>
-          </div>
+      <MatchPanel sessionId={sessionId} onSessionExpired={onSessionExpired} />
 
-          {/* Both panels stay mounted, so switching tabs keeps what you typed and the last results. */}
-          <div hidden={tab !== 'match'}>
-            <MatchPanel sessionId={session?.sessionId ?? null} onSessionExpired={onSessionExpired} />
-          </div>
-          <div hidden={tab !== 'search'}>
-            <SearchPanel sessionId={session?.sessionId ?? null} onSessionExpired={onSessionExpired} />
-          </div>
-        </section>
+      <SearchPanel sessionId={sessionId} onSessionExpired={onSessionExpired} />
 
-        <footer className="footer">
-          Built by Shivam Missar with C#/.NET, React and retrieval-augmented generation ·{' '}
-          <a href={repoUrl} target="_blank" rel="noreferrer">How it works</a>
-        </footer>
-      </div>
-    </>
+      <footer className="colophon">
+        <p>
+          Built by Shivam Missar in C#/.NET and React, using retrieval-augmented generation: the AI only sees the parts
+          of your CV that a search finds relevant, and has to cite them.
+        </p>
+        <p className="mono">
+          {info ? `AI — ${info.provider}` : 'AI — loading'} · <a href={repoUrl} target="_blank" rel="noreferrer">Source on GitHub ↗</a>
+        </p>
+      </footer>
+    </div>
   )
 }
 

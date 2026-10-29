@@ -6,39 +6,36 @@ type Props = {
   info: Info | null
 }
 
-/** A small pill in the top bar showing whether the server is up and which AI it's using. */
-export function StatusPill({ status, info }: Props) {
+/** A small "on air" style line in the masthead: whether the server is up, and which AI it's using. */
+export function StatusLine({ status, info }: Props) {
   const label = {
-    checking: 'Connecting…',
-    waking: 'Waking up…',
+    checking: 'Connecting',
+    waking: 'Waking up',
     offline: 'Offline',
     online: 'Live',
   }[status]
 
   return (
-    <span className={`status-pill status-pill--${status}`} role="status">
-      <span className="status-pill__dot" aria-hidden="true" />
-      <span>
-        {label}
-        {/* The provider name is left out on narrow screens to keep the top bar on one line. */}
-        {status === 'online' && info && <span className="hide-small"> · {info.provider}</span>}
-      </span>
+    <span className={`status status--${status}`} role="status">
+      <span className="status__dot" aria-hidden="true" />
+      {label}
+      {status === 'online' && info && <span className="status__provider"> — {info.provider}</span>}
     </span>
   )
 }
 
-/** A banner explaining the wait while a sleeping free-tier server starts up, or why the server can't be reached. */
+/** A notice explaining the wait while a sleeping free-tier server starts up, or why it can't be reached. */
 export function StatusBanner({ status }: Pick<Props, 'status'>) {
   if (status === 'waking') {
     return (
-      <p className="banner banner--waking">
-        <span className="spinner" aria-hidden="true" />
-        Waking up the server. The free hosting sleeps when nobody is using it, so this can take up to a minute…
+      <p className="notice">
+        <strong>Waking up the server.</strong> It runs on free hosting that sleeps when nobody is using it, so the first
+        visit can take up to a minute.
       </p>
     )
   }
   if (status === 'offline') {
-    return <p className="banner banner--offline">Can't reach the server right now. Retrying…</p>
+    return <p className="notice notice--error"><strong>Can't reach the server right now.</strong> Retrying…</p>
   }
   return null
 }
