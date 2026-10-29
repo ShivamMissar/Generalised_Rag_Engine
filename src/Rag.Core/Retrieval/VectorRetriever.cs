@@ -36,4 +36,35 @@ public sealed class VectorRetriever(
         var queryEmbedding = await embedder.GenerateVectorAsync(prefixes.Query + query, cancellationToken: cancellationToken);
         return await store.SearchAsync(collectionName, queryEmbedding, topK, cancellationToken);
     }
+
+    /// <inheritdoc />
+    /// <remarks>Embeds every query in a single request to the embedding model, then searches once per query.</remarks>
+    public async Task<IReadOnlyList<IReadOnlyList<SearchResult>>> RetrieveManyAsync(
+        IReadOnlyList<string> queries,
+        string collectionName,
+        int topK = 5,
+        CancellationToken cancellationToken = default)
+    {
+        foreach (var query in queries)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(query);
+        }
+        if (queries.Count == 0)
+        {
+            return [];
+        }
+
+        var embeddings = await embedder.GenerateAsync(queries.Select(query => prefixes.Query + query), cancellationToken: cancellationToken);
+        if (embeddings.Count != queries.Count)
+        {
+            throw new InvalidOperationException($"Asked for {queries.Count} embeddings but got {embeddings.Count}.");
+        }
+
+        var results = new List<IReadOnlyList<SearchResult>>(queries.Count);
+        foreach (var embedding in embeddings)
+        {
+            results.Add(await store.SearchAsync(collectionName, embedding.Vector, topK, cancellationToken));
+        }
+        return results;
+    }
 }

@@ -17,4 +17,26 @@ public interface IRetriever
         string collectionName,
         int topK = 5,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves results for several queries, returned in the same order as the queries.
+    /// </summary>
+    /// <remarks>
+    /// By default this calls <see cref="RetrieveAsync"/> once per query. Retrievers that call an embedding model
+    /// should override it to embed every query in one request. That matters with hosted models, where each request
+    /// counts against a rate limit: a job ad with 8 requirements becomes 1 embedding request instead of 8.
+    /// </remarks>
+    async Task<IReadOnlyList<IReadOnlyList<SearchResult>>> RetrieveManyAsync(
+        IReadOnlyList<string> queries,
+        string collectionName,
+        int topK = 5,
+        CancellationToken cancellationToken = default)
+    {
+        var results = new List<IReadOnlyList<SearchResult>>(queries.Count);
+        foreach (var query in queries)
+        {
+            results.Add(await RetrieveAsync(query, collectionName, topK, cancellationToken));
+        }
+        return results;
+    }
 }

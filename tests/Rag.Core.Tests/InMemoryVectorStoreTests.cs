@@ -76,6 +76,17 @@ public class InMemoryVectorStoreTests
     }
 
     [Fact]
+    public async Task Deleting_a_collection_removes_it_and_its_chunks()
+    {
+        await StoreWith(TestData.Chunk("a", "d", [1f, 0f]));
+
+        await _store.DeleteCollectionAsync("test");
+
+        await Assert.ThrowsAsync<CollectionNotFoundException>(() => _store.SearchAsync("test", new float[] { 1f, 0f }, 5));
+        await _store.DeleteCollectionAsync("test"); // deleting again is fine
+    }
+
+    [Fact]
     public async Task Collections_are_kept_separate()
     {
         await StoreWith(TestData.Chunk("in-test", "d", [1f, 0f]));

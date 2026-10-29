@@ -96,6 +96,19 @@ public sealed class SqliteVectorStoreTests : IDisposable
     }
 
     [Fact]
+    public async Task Deleting_a_collection_removes_it_and_its_chunks()
+    {
+        await AddAsync(Chunk("a", "d", [1f, 0f]));
+
+        await _store.DeleteCollectionAsync("test");
+
+        await Assert.ThrowsAsync<CollectionNotFoundException>(() => _store.SearchAsync("test", new float[] { 1f, 0f }, 5));
+        // Recreating it starts empty, so the chunks really were deleted rather than orphaned.
+        await _store.EnsureCollectionAsync(TestCollection);
+        Assert.Empty(await _store.SearchAsync("test", new float[] { 1f, 0f }, 5));
+    }
+
+    [Fact]
     public async Task Collections_are_kept_separate()
     {
         await AddAsync(Chunk("in-test", "d", [1f, 0f]));

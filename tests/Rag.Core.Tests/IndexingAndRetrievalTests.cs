@@ -78,6 +78,21 @@ public class IndexingAndRetrievalTests
         Assert.Equal(["query: SQL experience"], _embedder.Inputs);
     }
 
+    [Fact]
+    public async Task Retrieving_many_queries_embeds_them_in_one_request_and_keeps_their_order()
+    {
+        var doc = TestData.Document("cv.md", "# CV\n## Backend\nC# APIs\n## Data\nSQL schemas");
+        await Indexer(EmbeddingPrefixes.None).IndexAsync(_collection, [doc]);
+        var embedder = new CountingEmbeddingGenerator(_embedder);
+        var retriever = new VectorRetriever(embedder, _store, new EmbeddingPrefixes("", "query: "));
+
+        var results = await retriever.RetrieveManyAsync(["SQL work", "C# work"], "test", topK: 1);
+
+        Assert.Equal(1, embedder.Requests);
+        Assert.Equal(["CV > Data", "CV > Backend"], results.Select(r => Assert.Single(r).Chunk.Metadata["section"]));
+        Assert.Equal(["query: SQL work", "query: C# work"], _embedder.Inputs.TakeLast(2));
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData("   ")]

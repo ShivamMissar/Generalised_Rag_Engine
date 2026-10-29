@@ -23,6 +23,12 @@ public interface IVectorStore
     Task UpsertAsync(string collectionName, IEnumerable<Chunk> chunks, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Deletes the named collection and all of its chunks. Does nothing if it doesn't exist. Used to remove a
+    /// visitor's uploaded documents when they ask, or when their session expires.
+    /// </summary>
+    Task DeleteCollectionAsync(string collectionName, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Removes every chunk belonging to the given documents from the named collection. Used before
     /// re-indexing a document, so chunks left over from an older, longer version don't linger.
     /// </summary>

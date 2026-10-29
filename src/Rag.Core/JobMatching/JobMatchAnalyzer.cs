@@ -30,12 +30,8 @@ public sealed class JobMatchAnalyzer(IRetriever retriever, IChatClient chat, Job
         var requirements = JobAdParser.ExtractRequirements(jobAd);
         var queries = requirements.Count > 0 ? requirements : [jobAd];
 
-        // 2. Retrieve candidates for each requirement.
-        var resultsPerQuery = new List<IReadOnlyList<SearchResult>>();
-        foreach (var query in queries)
-        {
-            resultsPerQuery.Add(await retriever.RetrieveAsync(query, collectionName, _options.ChunksPerRequirement, cancellationToken));
-        }
+        // 2. Retrieve candidates for each requirement (in one batch, so it's one embedding request, not one each).
+        var resultsPerQuery = await retriever.RetrieveManyAsync(queries, collectionName, _options.ChunksPerRequirement, cancellationToken);
 
         // 3. Merge into one evidence list.
         var evidence = SelectEvidence(resultsPerQuery, _options.MaxEvidence);

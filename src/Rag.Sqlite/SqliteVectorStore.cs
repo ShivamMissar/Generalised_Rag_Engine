@@ -85,6 +85,17 @@ public sealed class SqliteVectorStore : IVectorStore
     }
 
     /// <inheritdoc />
+    public async Task DeleteCollectionAsync(string collectionName, CancellationToken cancellationToken = default)
+    {
+        await using var connection = await OpenAsync(cancellationToken);
+        await using var command = connection.CreateCommand();
+        // The chunks go too, through ON DELETE CASCADE.
+        command.CommandText = "DELETE FROM collections WHERE name = $name";
+        command.Parameters.AddWithValue("$name", collectionName);
+        await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
     public async Task UpsertAsync(string collectionName, IEnumerable<Chunk> chunks, CancellationToken cancellationToken = default)
     {
         await using var connection = await OpenAsync(cancellationToken);

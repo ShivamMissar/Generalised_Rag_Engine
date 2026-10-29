@@ -34,6 +34,16 @@ public sealed class InMemoryVectorStore : IVectorStore
     }
 
     /// <inheritdoc />
+    public Task DeleteCollectionAsync(string collectionName, CancellationToken cancellationToken = default)
+    {
+        lock (_lock)
+        {
+            _collections.Remove(collectionName);
+        }
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc />
     public Task UpsertAsync(string collectionName, IEnumerable<Chunk> chunks, CancellationToken cancellationToken = default)
     {
         lock (_lock)
