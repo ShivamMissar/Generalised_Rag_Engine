@@ -1,0 +1,9 @@
+# Netlify builds and hosts the web page (web/). The page calls the API on Render directly.
+[build]
+  base = "web"
+  command = "npm ci && npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+  VITE_API_URL = "https://job-match-api.onrender.com"

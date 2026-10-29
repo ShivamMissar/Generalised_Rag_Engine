@@ -1,0 +1,16 @@
+# Render Blueprint for the API: in Render, choose New → Blueprint and select this repository.
+# Render builds the Dockerfile and asks for the Gemini API key, which is stored as a secret on Render, never in git.
+services:
+  - type: web
+    name: job-match-api
+    runtime: docker
+    plan: free
+    region: frankfurt
+    healthCheckPath: /health
+    envVars:
+      - key: Rag__Provider
+        value: Gemini
+      - key: Rag__Gemini__ApiKey
+        sync: false # entered in the Render dashboard
+      - key: Rag__AllowedOrigins__0
+        value: https://job-match-assistant.netlify.app
