@@ -52,9 +52,18 @@ public static class RagServiceCollectionExtensions
         services.AddSingleton<IChatClient>(sp =>
         {
             var options = sp.GetRequiredService<IOptions<RagOptions>>().Value;
-            return options.IsGemini
-                ? GeminiClient(options.Gemini).GetChatClient(options.Gemini.ChatModel).AsIChatClient()
-                : new OllamaApiClient(options.Ollama.Uri, options.Ollama.ChatModel);
+            if (!options.IsGemini)
+            {
+                return new OllamaApiClient(options.Ollama.Uri, options.Ollama.ChatModel);
+            }
+
+            // The main Gemini model, with a lighter one to fall back on when it's overloaded.
+            var gemini = GeminiClient(options.Gemini);
+            var models = new[] { options.Gemini.ChatModel, options.Gemini.FallbackChatModel }
+                .Where(model => !string.IsNullOrWhiteSpace(model))
+                .Select(model => gemini.GetChatClient(model).AsIChatClient())
+                .ToList();
+            return new FallbackChatClient(models, sp.GetRequiredService<ILogger<FallbackChatClient>>());
         });
         // nomic-embed-text was trained with "search_query:" / "search_document:" labels. Gemini's embeddings weren't.
         services.AddSingleton(sp => sp.GetRequiredService<IOptions<RagOptions>>().Value.IsGemini
@@ -83,8 +92,18 @@ public static class RagServiceCollectionExtensions
 
     /// <summary>
     /// Gemini accepts the same requests as OpenAI's API at its own address, so the official OpenAI SDK (and its
-    /// Microsoft.Extensions.AI adapter) works with it. The SDK also retries automatically when the service is busy.
+    /// Microsoft.Extensions.AI adapter) works with it.
     /// </summary>
+    /// <remarks>
+    /// The SDK would normally retry a busy service three times with growing pauses, which can leave a visitor waiting
+    /// minutes. Here it retries once, and gives up on a request after <see cref="GeminiOptions.RequestTimeoutSeconds"/>,
+    /// so the <see cref="FallbackChatClient"/> can move on to the next model quickly.
+    /// </remarks>
     private static OpenAIClient GeminiClient(GeminiOptions gemini) =>
-        new(new ApiKeyCredential(gemini.ApiKey!), new OpenAIClientOptions { Endpoint = gemini.Endpoint });
+        new(new ApiKeyCredential(gemini.ApiKey!), new OpenAIClientOptions
+        {
+            Endpoint = gemini.Endpoint,
+            NetworkTimeout = TimeSpan.FromSeconds(gemini.RequestTimeoutSeconds),
+            RetryPolicy = new System.ClientModel.Primitives.ClientRetryPolicy(maxRetries: 1),
+        });
 }

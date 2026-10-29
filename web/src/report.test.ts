@@ -67,6 +67,14 @@ What to highlight:
     ])
   })
 
+  it('capitalises the explanation when the model runs it on from the rating', () => {
+    expect(parseReport('Overall match: Strong as the candidate meets every requirement.')[0]).toEqual({
+      kind: 'overall',
+      rating: 'Strong',
+      segments: [{ kind: 'text', text: 'As the candidate meets every requirement.' }],
+    })
+  })
+
   it('shows anything unrecognised as a paragraph', () => {
     expect(parseReport('Something unexpected [2].')).toEqual([
       { kind: 'paragraph', segments: [{ kind: 'text', text: 'Something unexpected ' }, { kind: 'cite', n: 2 }, { kind: 'text', text: '.' }] },

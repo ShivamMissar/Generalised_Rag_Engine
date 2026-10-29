@@ -50,6 +50,8 @@ public sealed class ApiTests : IDisposable
     {
         var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
+            // Not "Development", so the tests never read the developer's own user secrets (like a real API key).
+            builder.UseEnvironment("Testing");
             builder.UseSetting("Rag:SamplesPath", _samplesFolder);
             foreach (var (key, value) in settings)
             {
@@ -413,12 +415,15 @@ public sealed class ApiTests : IDisposable
         // A real (unfaked) container: only checks wiring, so no requests are sent to Google.
         using var api = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
+            builder.UseEnvironment("Testing");
             builder.UseSetting("Rag:Provider", "Gemini");
             builder.UseSetting("Rag:Gemini:ApiKey", "test-key");
         });
 
         var services = api.Services;
-        Assert.Contains("OpenAI", services.GetRequiredService<IChatClient>().GetType().Name);
+        var chat = services.GetRequiredService<IChatClient>();
+        Assert.IsType<FallbackChatClient>(chat);
+        Assert.Equal("gemini-3.5-flash", chat.GetService<ChatClientMetadata>()?.DefaultModelId);
         Assert.Contains("OpenAI", services.GetRequiredService<IEmbeddingGenerator<string, Embedding<float>>>().GetType().Name);
         Assert.Equal(EmbeddingPrefixes.None, services.GetRequiredService<EmbeddingPrefixes>());
         var info = await api.CreateClient().GetFromJsonAsync<InfoResponse>("/api/info");

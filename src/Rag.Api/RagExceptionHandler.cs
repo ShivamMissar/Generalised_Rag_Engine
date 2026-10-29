@@ -42,6 +42,10 @@ public sealed class RagExceptionHandler(IProblemDetailsService problemDetails, I
                 "Something went wrong talking to the AI service. Please try again later."),
             HttpRequestException => (StatusCodes.Status503ServiceUnavailable, "The AI models are unavailable",
                 "Couldn't reach the AI service. If you're running locally, check Ollama is running: brew services start ollama"),
+            // The AI didn't answer in time (not the visitor closing the page, which cancels the request itself).
+            OperationCanceledException when !httpContext.RequestAborted.IsCancellationRequested =>
+                (StatusCodes.Status503ServiceUnavailable, "The AI service is busy",
+                "The AI service is taking too long to answer right now. Please try again in a minute."),
             _ => null,
         };
 

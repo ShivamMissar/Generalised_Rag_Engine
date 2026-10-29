@@ -50,8 +50,18 @@ public sealed class GeminiOptions
 {
     public string? ApiKey { get; set; }
     public Uri Endpoint { get; set; } = new("https://generativelanguage.googleapis.com/v1beta/openai/");
-    public string ChatModel { get; set; } = "gemini-2.5-flash";
+    public string ChatModel { get; set; } = "gemini-3.5-flash";
+
+    /// <summary>
+    /// Used when <see cref="ChatModel"/> is overloaded or too slow, which happens on the free tier at busy times.
+    /// Leave empty for no fallback.
+    /// </summary>
+    public string? FallbackChatModel { get; set; } = "gemini-3.5-flash-lite";
+
     public string EmbeddingModel { get; set; } = "gemini-embedding-001";
+
+    /// <summary>How long to wait for one answer from Gemini before treating the model as unavailable.</summary>
+    public int RequestTimeoutSeconds { get; set; } = 60;
 }
 
 /// <summary>

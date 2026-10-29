@@ -42,7 +42,9 @@ export function parseReport(report: string): ReportLine[] {
 
     let match: RegExpMatchArray | null
     if ((match = line.match(overallPattern))) {
-      lines.push({ kind: 'overall', rating: capitalise(match[1]) as Rating, segments: toSegments(match[2]) })
+      // "Strong as the candidate…" → the explanation reads "As the candidate…" under the rating.
+      const explanation = match[2].charAt(0).toUpperCase() + match[2].slice(1)
+      lines.push({ kind: 'overall', rating: capitalise(match[1]) as Rating, segments: toSegments(explanation) })
     } else if ((match = line.match(headingPattern))) {
       lines.push({ kind: 'heading', title: capitalise(match[1]), segments: toSegments(match[2]) })
     } else if ((match = line.match(requirementPattern))) {
