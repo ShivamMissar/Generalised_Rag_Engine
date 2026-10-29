@@ -22,6 +22,7 @@ src/
 tests/
   Rag.Core.Tests/    xUnit tests
 evals/               Retrieval evaluation set
+samples/             Made-up CV and project write-ups for testing
 ```
 
 ## Getting started

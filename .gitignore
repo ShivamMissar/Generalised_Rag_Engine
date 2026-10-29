@@ -484,3 +484,6 @@ $RECYCLE.BIN/
 # Local AI assistant files (not part of the project)
 CLAUDE.md
 .claude/
+
+# Real personal documents (CVs etc.) are never committed
+private/
