@@ -79,17 +79,15 @@ Run the tests from the repository root with `dotnet test`.
 
 ### The web page
 
-The easiest way to use the engine. It needs [Node.js](https://nodejs.org) (`brew install node`) and two terminals, one for the API and one for the page:
+The easiest way to use the engine. It needs [Node.js](https://nodejs.org) (`brew install node`). One command starts both the API and the page:
 
 ```bash
-# Terminal 1, from the repository root
-dotnet run --project src/Rag.Api
-
-# Terminal 2
 cd web
 npm install        # first time only
-npm run dev        # then open http://localhost:5173
+npm run dev        # starts the API and the page, then open http://localhost:5173
 ```
+
+If the API is already running, `npm run dev` uses it instead of starting a second copy. Ctrl+C stops everything it started. To start only the page, use `npm run dev:web`.
 
 Click **Rebuild index** once, then paste a job ad (or click **Use the sample job ad**) and click **Analyse match**. The report shows a rating and a Met / Partly met / Not met badge for each requirement. Click any citation number to jump to the evidence it refers to. The **Search** tab shows which chunks best match a question.
 

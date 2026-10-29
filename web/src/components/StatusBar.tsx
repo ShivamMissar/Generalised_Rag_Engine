@@ -10,17 +10,20 @@ export function StatusBar() {
   const [message, setMessage] = useState<string | null>(null)
 
   useEffect(() => {
-    // Check now, then every 10 seconds, so the dot turns green as soon as you start the API.
+    // Check every 2 seconds while the API is offline (it may still be starting up), then every 10 seconds once
+    // it's running, so the dot turns green soon after the API is ready.
     let cancelled = false
+    let timer: ReturnType<typeof setTimeout> | undefined
     const update = async () => {
       const ok = await checkHealth()
-      if (!cancelled) setHealth(ok ? 'online' : 'offline')
+      if (cancelled) return
+      setHealth(ok ? 'online' : 'offline')
+      timer = setTimeout(update, ok ? 10_000 : 2_000)
     }
     update()
-    const timer = setInterval(update, 10_000)
     return () => {
       cancelled = true
-      clearInterval(timer)
+      clearTimeout(timer)
     }
   }, [])
 
@@ -42,7 +45,7 @@ export function StatusBar() {
       <span className={`status__dot status__dot--${health}`} aria-hidden="true" />
       <span className="status__text">
         {health === 'online' && 'API connected'}
-        {health === 'offline' && <>API offline. Start it with <code>dotnet run --project src/Rag.Api</code></>}
+        {health === 'offline' && <>API offline. If you've just run <code>npm run dev</code>, it's probably still starting.</>}
         {health === 'checking' && 'Checking the API…'}
       </span>
       {message && <span className="status__message">{message}</span>}

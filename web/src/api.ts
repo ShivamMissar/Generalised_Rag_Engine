@@ -28,7 +28,7 @@ export class ApiError extends Error {
   }
 }
 
-const apiDownMessage = "Can't reach the API. Start it with: dotnet run --project src/Rag.Api"
+const apiDownMessage = "Can't reach the API. It may still be starting. If not, stop and re-run npm run dev in the web folder."
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let response: Response
