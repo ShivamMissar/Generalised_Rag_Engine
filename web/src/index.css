@@ -132,13 +132,128 @@ code {
 
 .status__dot--online { background: var(--good); }
 .status__dot--offline { background: var(--bad); }
+.status__dot--waking { background: var(--partial); animation: pulse 1.2s ease-in-out infinite; }
 
-.status__message {
-  color: var(--muted);
+@keyframes pulse {
+  50% { opacity: 0.3; }
 }
 
-.status .button {
-  margin-left: auto;
+@media (prefers-reduced-motion: reduce) {
+  .status__dot--waking { animation: none; }
+}
+
+/* ---- Steps ---- */
+
+.step-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.step-heading--outside {
+  margin-top: 0.5rem;
+}
+
+.step-heading--outside .tabs {
+  flex: 1;
+}
+
+.step-number {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+/* ---- Documents (step 1) ---- */
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  text-align: center;
+  padding: 1.75rem 1rem;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  transition: border-color 0.15s, background-color 0.15s;
+}
+
+.dropzone--active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.dropzone--busy {
+  opacity: 0.8;
+}
+
+.sample-line {
+  font-size: 0.92rem;
+}
+
+.privacy {
+  font-size: 0.85rem;
+  color: var(--muted);
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+}
+
+.notice {
+  color: var(--partial);
+  background: var(--partial-bg);
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+}
+
+.session {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.session__files {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.session__files li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.session__check {
+  color: var(--good);
+  font-weight: 700;
+}
+
+.session__name {
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.app__footer {
+  margin-top: 1rem;
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+.app__footer a {
+  color: var(--accent);
 }
 
 /* ---- Tabs ---- */
@@ -244,6 +359,11 @@ textarea:focus, input:focus, select:focus {
   padding: 0;
   cursor: pointer;
   text-decoration: underline;
+}
+
+.link:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .search {

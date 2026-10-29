@@ -1,5 +1,9 @@
-// Talks to the .NET API (src/Rag.Api). In development, Vite forwards /api and /health to it (see vite.config.ts).
-// The types below mirror src/Rag.Api/ApiModels.cs.
+// Talks to the .NET API (src/Rag.Api). The types below mirror src/Rag.Api/ApiModels.cs.
+//
+// In development, apiBase is empty: Vite forwards /api and /health to the local API (see vite.config.ts).
+// For the hosted site, VITE_API_URL is set at build time (see netlify.toml) to the API's own address, and the API
+// allows this site through CORS (Rag:AllowedOrigins).
+const apiBase = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '')
 
 export type ChunkHit = {
   chunkId: string
@@ -9,7 +13,26 @@ export type ChunkHit = {
   content: string
 }
 
-export type IndexResponse = { collection: string; documents: number; chunks: number }
+/** What the server is running and its limits. */
+export type Info = {
+  provider: string
+  chatModel: string
+  sessionMinutes: number
+  maxFiles: number
+  maxFileMegabytes: number
+  fileTypes: string[]
+  remainingToday: number
+}
+
+/** A visitor's uploaded documents. expiresAt is null for the shared sample. */
+export type Session = {
+  sessionId: string
+  documents: { name: string; chunks: number }[]
+  chunks: number
+  expiresAt: string | null
+  isSample: boolean
+}
+
 export type SearchResponse = { query: string; results: ChunkHit[] }
 export type MatchResponse = { requirements: string[]; evidence: ChunkHit[]; report: string }
 
@@ -22,28 +45,25 @@ export class ApiError extends Error {
     this.status = status
   }
 
-  /** True when nothing has been indexed yet (the API returns 409). */
-  get notIndexed(): boolean {
-    return this.status === 409
+  /** True when the visitor's uploaded documents have expired or been removed (the API returns 404). */
+  get sessionExpired(): boolean {
+    return this.status === 404
   }
 }
 
-const apiDownMessage = "Can't reach the API. It may still be starting. If not, stop and re-run npm run dev in the web folder."
+const apiDownMessage = "Can't reach the server. If the page has only just opened, it may still be waking up, so try again in a moment."
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+async function send(path: string, init?: RequestInit): Promise<Response> {
   let response: Response
   try {
-    response = await fetch(path, init)
+    response = await fetch(apiBase + path, init)
   } catch {
     throw new ApiError(apiDownMessage, 0)
   }
-
-  if (response.ok) {
-    return (await response.json()) as T
-  }
+  if (response.ok) return response
 
   // The API sends errors as "problem details" JSON with a readable "detail" or a list of validation "errors".
-  // If the body isn't JSON, the API itself isn't answering (the dev server's proxy replied instead).
+  // If the body isn't JSON, the API itself isn't answering (a proxy replied instead).
   let problem: { title?: string; detail?: string; errors?: Record<string, string[]> }
   try {
     problem = await response.json()
@@ -54,29 +74,51 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   throw new ApiError(problem.detail ?? validation ?? problem.title ?? `Request failed (${response.status})`, response.status)
 }
 
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  return (await (await send(path, init)).json()) as T
+}
+
 /** True if the API answers its health check. */
 export async function checkHealth(): Promise<boolean> {
   try {
-    const response = await fetch('/health')
+    const response = await fetch(`${apiBase}/health`)
     return response.ok && (await response.text()) === 'Healthy'
   } catch {
     return false
   }
 }
 
-export function rebuildIndex(): Promise<IndexResponse> {
-  return request('/api/index', { method: 'POST' })
+export function getInfo(): Promise<Info> {
+  return request('/api/info')
 }
 
-export function search(query: string, topK: number): Promise<SearchResponse> {
-  const params = new URLSearchParams({ q: query, topK: String(topK) })
+export function createSession(files: File[]): Promise<Session> {
+  const form = new FormData()
+  for (const file of files) form.append('files', file, file.name)
+  return request('/api/sessions', { method: 'POST', body: form })
+}
+
+export function createSampleSession(): Promise<Session> {
+  return request('/api/sessions/sample', { method: 'POST' })
+}
+
+export function getSession(sessionId: string): Promise<Session> {
+  return request(`/api/sessions/${encodeURIComponent(sessionId)}`)
+}
+
+export async function deleteSession(sessionId: string): Promise<void> {
+  await send(`/api/sessions/${encodeURIComponent(sessionId)}`, { method: 'DELETE' })
+}
+
+export function search(query: string, topK: number, sessionId: string): Promise<SearchResponse> {
+  const params = new URLSearchParams({ q: query, topK: String(topK), sessionId })
   return request(`/api/search?${params}`)
 }
 
-export function matchJobAd(jobAd: string): Promise<MatchResponse> {
+export function matchJobAd(jobAd: string, sessionId: string): Promise<MatchResponse> {
   return request('/api/match', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ jobAd }),
+    body: JSON.stringify({ jobAd, sessionId }),
   })
 }

@@ -4,8 +4,14 @@ import sampleJobAd from '../../../samples/job-ads/backend-developer.md?raw'
 import { EvidenceCard } from './EvidenceCard'
 import { Report } from './Report'
 
+type Props = {
+  /** The visitor's session, or null if they haven't added a CV yet. */
+  sessionId: string | null
+  onSessionExpired: () => void
+}
+
 /** Paste a job ad, get the AI's match report alongside the evidence it was given. */
-export function MatchPanel() {
+export function MatchPanel({ sessionId, onSessionExpired }: Props) {
   const [jobAd, setJobAd] = useState('')
   const [result, setResult] = useState<MatchResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -21,14 +27,19 @@ export function MatchPanel() {
   }, [loading])
 
   const onAnalyse = async () => {
+    if (!sessionId) return
     setSeconds(0)
     setLoading(true)
     setError(null)
     setResult(null)
     try {
-      setResult(await matchJobAd(jobAd))
+      setResult(await matchJobAd(jobAd, sessionId))
     } catch (e) {
-      setError(friendlyError(e))
+      if (e instanceof ApiError && e.sessionExpired) {
+        onSessionExpired()
+      } else {
+        setError(e instanceof ApiError ? e.message : 'Something went wrong. Please try again.')
+      }
     } finally {
       setLoading(false)
     }
@@ -47,7 +58,7 @@ export function MatchPanel() {
         <div className="field__label-row">
           <label htmlFor="job-ad">Job ad</label>
           <button type="button" className="link" onClick={() => setJobAd(sampleJobAd)}>
-            Use the sample job ad
+            Use a sample job ad
           </button>
         </div>
         <textarea
@@ -60,9 +71,10 @@ export function MatchPanel() {
       </div>
 
       <div className="actions">
-        <button type="button" className="button" onClick={onAnalyse} disabled={loading || jobAd.trim() === ''}>
+        <button type="button" className="button" onClick={onAnalyse} disabled={loading || !sessionId || jobAd.trim() === ''}>
           {loading ? 'Analysing…' : 'Analyse match'}
         </button>
+        {!sessionId && <span className="muted">Add your CV in step 1 first.</span>}
         {loading && <span className="muted">Searching your documents and asking the AI… {seconds}s (usually 15–30s)</span>}
       </div>
 
@@ -89,11 +101,4 @@ export function MatchPanel() {
       )}
     </section>
   )
-}
-
-function friendlyError(error: unknown): string {
-  if (error instanceof ApiError) {
-    return error.notIndexed ? 'Nothing has been indexed yet. Click "Rebuild index" at the top first.' : error.message
-  }
-  return 'Something went wrong.'
 }

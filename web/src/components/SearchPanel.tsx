@@ -2,8 +2,14 @@ import { useState, type FormEvent } from 'react'
 import { ApiError, search, type SearchResponse } from '../api'
 import { EvidenceCard } from './EvidenceCard'
 
-/** Ask a question and see which chunks of your documents match best, with their scores. */
-export function SearchPanel() {
+type Props = {
+  /** The visitor's session, or null if they haven't added a CV yet. */
+  sessionId: string | null
+  onSessionExpired: () => void
+}
+
+/** Ask a question and see which parts of your documents match best, with their scores. */
+export function SearchPanel({ sessionId, onSessionExpired }: Props) {
   const [query, setQuery] = useState('')
   const [topK, setTopK] = useState(5)
   const [result, setResult] = useState<SearchResponse | null>(null)
@@ -12,15 +18,18 @@ export function SearchPanel() {
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
+    if (!sessionId) return
     setLoading(true)
     setError(null)
     try {
-      setResult(await search(query, topK))
+      setResult(await search(query, topK, sessionId))
     } catch (err) {
       setResult(null)
-      setError(err instanceof ApiError
-        ? (err.notIndexed ? 'Nothing has been indexed yet. Click "Rebuild index" at the top first.' : err.message)
-        : 'Something went wrong.')
+      if (err instanceof ApiError && err.sessionExpired) {
+        onSessionExpired()
+      } else {
+        setError(err instanceof ApiError ? err.message : 'Something went wrong. Please try again.')
+      }
     } finally {
       setLoading(false)
     }
@@ -43,11 +52,12 @@ export function SearchPanel() {
             <option key={k} value={k}>Top {k}</option>
           ))}
         </select>
-        <button type="submit" className="button" disabled={loading || query.trim() === ''}>
+        <button type="submit" className="button" disabled={loading || !sessionId || query.trim() === ''}>
           {loading ? 'Searching…' : 'Search'}
         </button>
       </form>
 
+      {!sessionId && <p className="muted">Add your CV in step 1 first.</p>}
       {error && <p className="error">{error}</p>}
 
       {result && (

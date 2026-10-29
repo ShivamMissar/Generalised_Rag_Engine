@@ -6,19 +6,24 @@
 ### Is the API running?
 GET {{api}}/health
 
-### 1. Build the index from samples/candidate (do this first)
-POST {{api}}/api/index
+### Which AI is in use, and the limits
+GET {{api}}/api/info
 
-### 2. Search
-GET {{api}}/api/search?q=experience with cloud deployment&topK=3
+### 1. Use the sample CV (or upload your own: POST /api/sessions with a multipart "files" field)
+# @name sample
+POST {{api}}/api/sessions/sample
 
-### 3. Job match (can take up to a minute)
+### 2. Search the session's documents
+GET {{api}}/api/search?q=experience with cloud deployment&topK=3&sessionId={{sample.response.body.sessionId}}
+
+### 3. Job match (can take up to a minute with local models)
 POST {{api}}/api/match
 Content-Type: application/json
 
 {
+  "sessionId": "{{sample.response.body.sessionId}}",
   "jobAd": "## What you'll need\n- 2+ years of C# and .NET\n- Building REST APIs with ASP.NET Core\n- SQL and relational database design\n- Experience with Kubernetes"
 }
 
-### Error example: missing question (400)
-GET {{api}}/api/search
+### Error example: no session (404)
+GET {{api}}/api/search?q=sql&sessionId=made-up
