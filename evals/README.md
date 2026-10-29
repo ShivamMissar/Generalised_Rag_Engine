@@ -18,4 +18,4 @@ It runs everything twice, with and without nomic-embed-text's `search_query:` / 
 
 ## Adding a question
 
-Add an entry to `cases` with a `question` and one or more `expectedSnippets`. Snippets are matched ignoring upper and lower case, and must appear word for word in the sample documents. A test (`EvalSetTests`) checks this, so a typo fails `dotnet test`.
+Add an entry to `cases` with a `question` and one or more `expectedSnippets`. Snippets are matched ignoring upper and lower case, and must appear word for word in the sample documents. A test in `EvaluationTests` checks this, so a typo fails `dotnet test`.

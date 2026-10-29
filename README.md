@@ -1,118 +1,160 @@
 # Generalised RAG Engine
 
-A general-purpose retrieval-augmented generation (RAG) engine in C#/.NET. It runs entirely on local models served by [Ollama](https://ollama.com), so no data leaves the machine.
+**A retrieval-augmented generation (RAG) engine in C#/.NET that runs entirely on local AI models.** Its first application is a job-match assistant: paste a job ad, and it checks each requirement against a CV and project write-ups, then writes a report in which every claim cites its evidence.
 
-The first use case is a **job-application assistant**: it loads my CV and project write-ups, retrieves the passages most relevant to a job ad, and uses a local LLM to analyse the match.
+Everything runs on one machine through [Ollama](https://ollama.com), so no CV or job data is sent to an outside service.
 
-## Stack
+![The match report: an overall rating, a Met / Not met verdict for each requirement with numbered citations, and the cited evidence on the right](docs/images/report.png)
 
-- .NET 10 (LTS), C#
-- [Microsoft.Extensions.AI](https://learn.microsoft.com/dotnet/ai/microsoft-extensions-ai) abstractions (`IChatClient`, `IEmbeddingGenerator`)
-- Ollama for local models: `gemma4:12b` for chat, `nomic-embed-text` for embeddings
-- SQLite for vector storage first, pgvector later
-- ASP.NET Core minimal API
-- React + TypeScript front end, built with Vite
+## What it does
+
+- **Matches a job ad against your documents.** It splits the ad into requirements, finds the strongest evidence for each in your CV and project write-ups, and asks a local LLM for a structured verdict.
+- **Shows its sources.** Every claim in the report cites numbered evidence, so you can check it. Clicking a citation highlights the passage it came from.
+- **Says what's missing.** The model is told to use only the evidence it's given, so a requirement with no supporting evidence is reported as "Not met" rather than glossed over.
+- **Measures its own search quality.** An evaluation set of questions with known answers scores retrieval with recall@k and MRR, so changes are judged by numbers rather than by eye.
+
+<details>
+<summary>More screenshots</summary>
+
+**Entering a job ad**
+
+![The job match tab with the sample job ad entered](docs/images/job-ad.png)
+
+**Searching the documents directly**
+
+![The search tab showing the best-matching chunks for "experience with automated testing", with similarity scores](docs/images/search.png)
+
+</details>
 
 ## How it works
 
-RAG means **looking things up before answering**. Instead of asking the AI about a candidate from memory (where it would make things up), the engine finds the relevant parts of the candidate's documents and gives them to the AI as evidence.
-
-**1. Indexing** (once, or when documents change)
-
-```
-files ──► Loader ──► Chunker ──► Embedding model ──► Vector store
-          (read)     (cut into   (fingerprint        (save in SQLite)
-                      sections)   each chunk)
-```
-
-**2. Answering** (each job ad)
-
-```
-job ad ──► split into requirements ──► Retriever (best chunks for each) ──► prompt with
-                                                                              numbered evidence
-                                                                                    │
-                       match report with citations like [2]  ◄──── chat model ◄─────┘
+```mermaid
+flowchart LR
+    subgraph Indexing["Indexing (once per document change)"]
+        F[CV and write-ups<br/>.md / .txt] --> L[Loader] --> C[Heading-aware<br/>chunker] --> E1[Embedding model<br/>nomic-embed-text] --> S[(SQLite<br/>vector store)]
+    end
+    subgraph Matching["Matching (per job ad)"]
+        J[Job ad] --> R[Split into<br/>requirements] --> Q[Retrieve top chunks<br/>per requirement] --> P[Prompt with<br/>numbered evidence] --> G[Chat model<br/>gemma4:12b] --> O[Cited report]
+    end
+    S -. cosine similarity .-> Q
 ```
 
-| Step | Code | In plain English |
+| Step | Code | What it does |
 |---|---|---|
 | Load | [`TextFileLoader`](src/Rag.Core/Loading/TextFileLoader.cs) | Reads `.txt` and `.md` files into documents, skipping empty ones. |
-| Chunk | [`MarkdownSectionChunker`](src/Rag.Core/Chunking/MarkdownSectionChunker.cs) | Cuts documents into ~800-character chunks along their headings, each starting with its heading path. |
-| Embed and store | [`DocumentIndexer`](src/Rag.Core/Indexing/DocumentIndexer.cs), [`SqliteVectorStore`](src/Rag.Sqlite/SqliteVectorStore.cs) | Turns each chunk into a 768-number "meaning fingerprint" and saves it. |
-| Compare | [`VectorMath`](src/Rag.Core/Similarity/VectorMath.cs), [`Ranking`](src/Rag.Core/Similarity/Ranking.cs) | Cosine similarity: how closely two fingerprints point the same way. |
-| Retrieve | [`VectorRetriever`](src/Rag.Core/Retrieval/VectorRetriever.cs) | Fingerprints a question and returns the top-k closest chunks. |
-| Generate | [`JobMatchAnalyzer`](src/Rag.Core/JobMatching/JobMatchAnalyzer.cs), [`JobMatchPrompt`](src/Rag.Core/JobMatching/JobMatchPrompt.cs) | Searches per requirement, builds the prompt and asks the chat model for a cited report. |
-| Evaluate | [`RetrievalEvaluator`](src/Rag.Core/Evaluation/RetrievalEvaluator.cs), [`evals/`](evals/) | Scores search quality (recall, MRR) on a set of questions with known answers. |
+| Chunk | [`MarkdownSectionChunker`](src/Rag.Core/Chunking/MarkdownSectionChunker.cs) | Splits documents along their headings into chunks of up to about 800 characters. Each chunk starts with its heading path, e.g. "Experience > Software Developer". |
+| Embed and store | [`DocumentIndexer`](src/Rag.Core/Indexing/DocumentIndexer.cs), [`SqliteVectorStore`](src/Rag.Sqlite/SqliteVectorStore.cs) | Embeds chunks in batches and stores text, metadata and vectors. Re-indexing a document replaces its old chunks. |
+| Retrieve | [`VectorRetriever`](src/Rag.Core/Retrieval/VectorRetriever.cs), [`VectorMath`](src/Rag.Core/Similarity/VectorMath.cs) | Embeds the question and ranks chunks by cosine similarity. |
+| Generate | [`JobMatchAnalyzer`](src/Rag.Core/JobMatching/JobMatchAnalyzer.cs), [`JobMatchPrompt`](src/Rag.Core/JobMatching/JobMatchPrompt.cs) | Retrieves evidence per requirement, merges and de-duplicates it, and prompts the model for a fixed-format report. |
+| Evaluate | [`RetrievalEvaluator`](src/Rag.Core/Evaluation/RetrievalEvaluator.cs), [`evals/`](evals/) | Scores retrieval against expected text snippets. |
 
-Each class has comments explaining what it does, why, and the main design choices.
+Every class opens with a plain-English explanation of what it does and the main choices behind it.
 
-## Structure
+## Design decisions
 
-```
-src/
-  Rag.Core/          The engine: interfaces, models, and every pipeline step above
-  Rag.Sqlite/        SQLite vector store
-  Rag.Playground/    Command-line tool that runs the engine (index, search, match, eval)
-  Rag.Api/           ASP.NET Core minimal API: index, search and match endpoints
-tests/
-  Rag.Core.Tests/    Unit tests for the engine (no Ollama needed)
-  Rag.Sqlite.Tests/  Tests for the SQLite store
-  Rag.Api.Tests/     Tests that run the API in memory with fake AI models
-  Rag.Testing/       Shared fakes: a keyword "embedding model" and a canned chat model
-web/                 React front end (Vite + TypeScript)
-evals/               Retrieval test questions
-samples/             Made-up CV, project write-ups and job ad for testing
-```
+- **Provider-independent AI.** The engine only depends on the [Microsoft.Extensions.AI](https://learn.microsoft.com/dotnet/ai/microsoft-extensions-ai) interfaces (`IChatClient`, `IEmbeddingGenerator`). Ollama is plugged in at startup, so switching to a hosted model means changing one registration, not the engine.
+- **Chunks follow the document's structure.** A CV is already divided into meaningful sections, so chunks follow its headings instead of fixed character counts, and each chunk repeats its heading path so it makes sense on its own. That makes overlap between chunks unnecessary.
+- **One search per requirement.** Embedding a whole job ad blends many skills into one vague vector. Searching for each requirement separately finds specific evidence.
+- **Every requirement gets some evidence.** When merging results, each requirement's best chunk is included first, and the remaining slots are filled by score. Otherwise the requirements that are easiest to match could take every slot.
+- **Grounded, cited output.** The system prompt limits the model to the numbered evidence and asks it to cite it. A low temperature (0.2) keeps reports consistent between runs.
+- **Evals that survive re-chunking.** Expected answers are text snippets ("GitHub Actions") rather than chunk IDs, so the same eval set still works after chunking changes. A unit test checks that every snippet exists in the sample documents.
+- **Problems are caught early.** Vector stores reject embeddings of the wrong size or from a different model with a clear message. The API returns standard problem-details errors: 400 for bad input, 409 if nothing is indexed yet, 503 if Ollama is down.
 
-## Getting started
+## Results
 
-Make sure Ollama is running with both models pulled (`ollama pull gemma4:12b` and `ollama pull nomic-embed-text`), then, from the `src` folder:
+**Retrieval quality** on the 10-question eval set (top 3 results per question). The run compares nomic-embed-text's optional `search_query:` / `search_document:` prefixes against no prefixes:
+
+| Setting | Recall@3 | MRR | Hit rate@3 |
+|---|---|---|---|
+| With prefixes (default) | 0.85 | 0.67 | 0.90 |
+| Without prefixes | 0.80 | 0.73 | 0.80 |
+
+With prefixes, more of the expected evidence was found. Without them, the first relevant result ranked higher on average. With only 10 questions the difference is small, which is why the eval set exists: the next retrieval change can be measured the same way. The eval also exposed a weak spot: a question about improving performance misses a CV bullet about cutting response times, because that bullet sits inside a large chunk about a whole job.
+
+**Speed:** a full match report takes about 15–30 seconds on an Apple M5 Max, most of it spent generating the report.
+
+## Tech stack
+
+| Area | Technology |
+|---|---|
+| Engine and API | C# / .NET 10, ASP.NET Core minimal APIs, Microsoft.Extensions.AI |
+| Models | Ollama with `gemma4:12b` (chat) and `nomic-embed-text` (768-dimension embeddings) |
+| Storage | SQLite via Microsoft.Data.Sqlite. Brute-force cosine search, with pgvector planned for scale. |
+| Front end | React 19, TypeScript, Vite |
+| Testing | xUnit (83 tests, including in-memory API tests with `WebApplicationFactory`), Vitest (8 tests) |
+
+## Running it
+
+**You need:** the [.NET 10 SDK](https://dotnet.microsoft.com/download), [Node.js](https://nodejs.org) and [Ollama](https://ollama.com). On a Mac with Homebrew: `brew install dotnet node ollama`.
 
 ```bash
-dotnet run --project Rag.Playground -- index                    # build the index from samples/candidate
-dotnet run --project Rag.Playground -- search "cloud experience"
-dotnet run --project Rag.Playground -- match                    # report for samples/job-ads/backend-developer.md
-dotnet run --project Rag.Playground -- eval                     # score search quality
-```
+# 1. Start Ollama and download the models (about 8 GB)
+brew services start ollama
+ollama pull gemma4:12b
+ollama pull nomic-embed-text
 
-Run the tests from the repository root with `dotnet test`.
-
-### The web page
-
-The easiest way to use the engine. It needs [Node.js](https://nodejs.org) (`brew install node`). One command starts both the API and the page:
-
-```bash
+# 2. Start the app: this runs the API and the web page together
 cd web
-npm install        # first time only
-npm run dev        # starts the API and the page, then open http://localhost:5173
+npm install
+npm run dev
 ```
 
-If the API is already running, `npm run dev` uses it instead of starting a second copy. Ctrl+C stops everything it started. To start only the page, use `npm run dev:web`.
+Open **http://localhost:5173**, click **Rebuild index**, then **Use the sample job ad** and **Analyse match**. The sample documents in [`samples/`](samples/) describe a fictional candidate. To use your own CV, put it in a git-ignored `private/` folder and point `Rag:DocumentsPath` in [`appsettings.json`](src/Rag.Api/appsettings.json) at it.
 
-Click **Rebuild index** once, then paste a job ad (or click **Use the sample job ad**) and click **Analyse match**. The report shows a rating and a Met / Partly met / Not met badge for each requirement. Click any citation number to jump to the evidence it refers to. The **Search** tab shows which chunks best match a question.
+<details>
+<summary>Other ways to run it</summary>
 
-The page is React and TypeScript, built with Vite, in [`web/`](web/). In development, Vite forwards `/api` requests to the API on port 5209. Run its tests with `npm test`.
-
-### The API
+**Command line** (from `src/`):
 
 ```bash
-dotnet run --project Rag.Api            # http://localhost:5209
+dotnet run --project Rag.Playground -- index
+dotnet run --project Rag.Playground -- search "cloud experience"
+dotnet run --project Rag.Playground -- match
+dotnet run --project Rag.Playground -- eval
 ```
+
+**API only** (`dotnet run --project src/Rag.Api`, on http://localhost:5209):
 
 | Endpoint | What it does |
 |---|---|
 | `GET /health` | Returns `Healthy` if the API is running. |
-| `POST /api/index` | Rebuilds the index from `Rag:DocumentsPath` (default `samples/candidate`). |
+| `POST /api/index` | Rebuilds the index from `Rag:DocumentsPath`. |
 | `GET /api/search?q=...&topK=5` | The best-matching chunks for a question (`topK` 1–20). |
-| `POST /api/match` with `{ "jobAd": "..." }` | Requirements, evidence and the AI's match report. |
+| `POST /api/match` with `{ "jobAd": "..." }` | Requirements, evidence and the match report. |
 
-Errors come back as standard problem-details JSON: 400 for bad input, 409 if nothing is indexed yet, 503 if Ollama isn't running. Settings live in the `Rag` section of [`appsettings.json`](src/Rag.Api/appsettings.json). [`Rag.Api.http`](src/Rag.Api/Rag.Api.http) has ready-made requests for VS Code's REST Client extension, and in Development the OpenAPI description is at `/openapi/v1.json`.
+[`Rag.Api.http`](src/Rag.Api/Rag.Api.http) has ready-made requests, and the OpenAPI description is at `/openapi/v1.json` in Development.
 
-Real personal documents belong in `private/`, which is git-ignored.
+**Tests:** `dotnet test` from the repository root, and `npm test` in `web/`. Neither needs Ollama, because the tests use fake models.
+
+</details>
+
+## Project structure
+
+```
+src/
+  Rag.Core/          The engine: loading, chunking, indexing, retrieval, job matching, evaluation
+  Rag.Sqlite/        SQLite vector store
+  Rag.Api/           ASP.NET Core minimal API
+  Rag.Playground/    Command-line tool (index, search, match, eval)
+web/                 React front end
+tests/               xUnit tests for the engine, the SQLite store and the API, plus shared fakes
+evals/               Retrieval eval set
+samples/             Fictional CV, project write-ups and job ad
+docs/                Case study and screenshots
+```
 
 ## Roadmap
 
-- **Week 1:** Ollama and first chat/embedding calls.
-- **Weeks 2–3:** Loading, chunking, retrieval with SQLite.
-- **Week 4:** API and job-ad analysis.
-- **Weeks 5–6:** Evals, tests, React front end, write-up.
+- [x] **Week 1:** Ollama and first chat and embedding calls
+- [x] **Weeks 2–3:** Loading, chunking, retrieval with SQLite
+- [x] **Week 4:** API and job-ad analysis
+- [x] **Weeks 5–6:** Evals, tests, React front end, write-up
+
+## Limitations and next steps
+
+- **Search scans every chunk.** That's fine for a CV's worth of text but not for large collections. The next step is pgvector, which searches using an index inside the database.
+- **Only `.txt` and `.md` files.** PDF and Word loaders would sit behind the same `IDocumentLoader` interface.
+- **Retrieval improvements to measure with the eval set:** smaller chunks for dense sections, hybrid keyword and vector search, and re-ranking.
+- **Local only.** A public deployment would need a hosted model provider, which the design already allows, plus rate limiting.
+
+For the full story, including the experiments and what they changed, see the [case study](docs/case-study.md).
