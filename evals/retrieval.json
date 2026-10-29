@@ -1,0 +1,15 @@
+{
+  "description": "Retrieval questions about the sample candidate in samples/candidate. Each expected snippet is text that a good search should return.",
+  "cases": [
+    { "question": "Has the candidate improved application performance?", "expectedSnippets": ["caching with Redis"] },
+    { "question": "Experience writing automated tests", "expectedSnippets": ["Wrote xUnit tests", "integration tests against a real SQLite database"] },
+    { "question": "Continuous integration and deployment pipelines", "expectedSnippets": ["GitHub Actions"] },
+    { "question": "Deploying applications to Azure", "expectedSnippets": ["Azure App Service"] },
+    { "question": "Frontend development with React", "expectedSnippets": ["React with TypeScript"] },
+    { "question": "Handling unreliable third-party APIs", "expectedSnippets": ["retries using Polly"] },
+    { "question": "Designing relational database schemas", "expectedSnippets": ["Designed PostgreSQL schemas"] },
+    { "question": "Working in an agile team", "expectedSnippets": ["agile team"] },
+    { "question": "Mentoring or teaching others", "expectedSnippets": ["coding club"] },
+    { "question": "Authentication and security", "expectedSnippets": ["JWT tokens"] }
+  ]
+}

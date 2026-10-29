@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Rag.Core\Rag.Core.csproj" />
+    <ProjectReference Include="..\Rag.Sqlite\Rag.Sqlite.csproj" />
   </ItemGroup>
 
   <ItemGroup>

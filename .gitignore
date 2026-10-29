@@ -487,3 +487,6 @@ CLAUDE.md
 
 # Real personal documents (CVs etc.) are never committed
 private/
+
+# Local vector database built by the playground
+data/

@@ -1,7 +1,21 @@
 # Evals
 
-This folder will hold the retrieval evaluation set: a list of test questions (for example, "Which projects show experience with distributed systems?"), each paired with the documents or chunks it should retrieve.
+An "exam" for the search half of the engine. [`retrieval.json`](retrieval.json) lists test questions about the made-up candidate in `samples/candidate`. Each question comes with **expected snippets**: short pieces of text that a good search should return.
 
-Running the retriever against this set and scoring the results (for example with recall@k and MRR) shows whether changes to chunking, embeddings or retrieval actually improve quality, so the evidence isn't just a few prompts tried by hand.
+Run it from the `src` folder:
 
-Nothing is here yet. The format and scoring are planned for Weeks 5–6 (see the roadmap in the root README).
+```bash
+dotnet run --project Rag.Playground -- eval
+```
+
+It indexes the sample documents, asks every question, and reports:
+
+- **Recall@k**: how much of what we wanted was in the top k results (1.0 means all of it).
+- **MRR** (mean reciprocal rank): how near the top the first good result was (1.0 means always first).
+- **Hit rate@k**: the fraction of questions with at least one good result in the top k.
+
+It runs everything twice, with and without nomic-embed-text's `search_query:` / `search_document:` prefixes, so you can compare the two settings.
+
+## Adding a question
+
+Add an entry to `cases` with a `question` and one or more `expectedSnippets`. Snippets are matched ignoring upper and lower case, and must appear word for word in the sample documents. A test (`EvalSetTests`) checks this, so a typo fails `dotnet test`.
