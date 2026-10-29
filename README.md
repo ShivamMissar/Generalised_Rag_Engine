@@ -10,7 +10,8 @@ The first use case is a **job-application assistant**: it loads my CV and projec
 - [Microsoft.Extensions.AI](https://learn.microsoft.com/dotnet/ai/microsoft-extensions-ai) abstractions (`IChatClient`, `IEmbeddingGenerator`)
 - Ollama for local models: `gemma4:12b` for chat, `nomic-embed-text` for embeddings
 - SQLite for vector storage first, pgvector later
-- ASP.NET Core minimal API, with a React front end later
+- ASP.NET Core minimal API
+- React + TypeScript front end, built with Vite
 
 ## How it works
 
@@ -58,6 +59,7 @@ tests/
   Rag.Sqlite.Tests/  Tests for the SQLite store
   Rag.Api.Tests/     Tests that run the API in memory with fake AI models
   Rag.Testing/       Shared fakes: a keyword "embedding model" and a canned chat model
+web/                 React front end (Vite + TypeScript)
 evals/               Retrieval test questions
 samples/             Made-up CV, project write-ups and job ad for testing
 ```
@@ -74,6 +76,24 @@ dotnet run --project Rag.Playground -- eval                     # score search q
 ```
 
 Run the tests from the repository root with `dotnet test`.
+
+### The web page
+
+The easiest way to use the engine. It needs [Node.js](https://nodejs.org) (`brew install node`) and two terminals, one for the API and one for the page:
+
+```bash
+# Terminal 1, from the repository root
+dotnet run --project src/Rag.Api
+
+# Terminal 2
+cd web
+npm install        # first time only
+npm run dev        # then open http://localhost:5173
+```
+
+Click **Rebuild index** once, then paste a job ad (or click **Use the sample job ad**) and click **Analyse match**. The report shows a rating and a Met / Partly met / Not met badge for each requirement. Click any citation number to jump to the evidence it refers to. The **Search** tab shows which chunks best match a question.
+
+The page is React and TypeScript, built with Vite, in [`web/`](web/). In development, Vite forwards `/api` requests to the API on port 5209. Run its tests with `npm test`.
 
 ### The API
 
