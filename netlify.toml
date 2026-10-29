@@ -6,4 +6,4 @@
 
 [build.environment]
   NODE_VERSION = "22"
-  VITE_API_URL = "https://job-match-api.onrender.com"
+  VITE_API_URL = "https://job-match-api-zh4n.onrender.com"
